@@ -4,6 +4,7 @@ import { useApiStatus } from '../shared/useApiStatus'
 
 export function useInterventionRequests(filters = {}) {
   const [items, setItems] = useState([])
+  const [facets, setFacets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const createStatus = useApiStatus()
@@ -14,7 +15,10 @@ export function useInterventionRequests(filters = {}) {
     setLoading(true)
     setError(null)
     getInterventionRequests(filters)
-      .then(res => setItems(res.items ?? res))
+      .then(res => {
+        setItems(res.items ?? res)
+        setFacets(res.facets?.statut ?? [])
+      })
       .catch(err => setError(err?.data?.detail ?? err.message))
       .finally(() => setLoading(false))
   }, [filtersKey]) // eslint-disable-line
@@ -27,5 +31,5 @@ export function useInterventionRequests(filters = {}) {
     return result
   }, [createStatus])
 
-  return { items, loading, error, create, createStatus, reload: load }
+  return { items, facets, loading, error, create, createStatus, reload: load }
 }

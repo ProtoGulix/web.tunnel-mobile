@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getErrorMessage } from '../lib/api/errors'
-import { Loader2 } from 'lucide-react'
+import { useServerHealth } from '../hooks/shared/useServerHealth'
+import { Loader2, WifiOff, Wifi } from 'lucide-react'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const serverStatus = useServerHealth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -37,6 +39,11 @@ export default function LoginPage() {
           </div>
           <h1 className="text-lg font-semibold text-tunnel-text">Tunnel Mobile</h1>
           <p className="text-sm text-tunnel-muted mt-1">GMAO Technicien</p>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full">
+            {serverStatus === 'checking' && <><span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse inline-block" /><span className="text-yellow-600">Vérification du serveur…</span></>}
+            {serverStatus === 'ok'       && <><Wifi size={12} className="text-green-500" /><span className="text-green-600">Serveur connecté</span></>}
+            {serverStatus === 'error'    && <><WifiOff size={12} className="text-red-500" /><span className="text-red-600">Serveur inaccessible</span></>}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,7 +74,7 @@ export default function LoginPage() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || serverStatus === 'error'}
             className="w-full py-3 rounded-lg bg-tunnel-accent text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={16} className="animate-spin" />}

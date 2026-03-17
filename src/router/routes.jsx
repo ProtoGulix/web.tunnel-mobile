@@ -4,6 +4,7 @@ import AppShell from '../components/layout/AppShell'
 import LoginPage from '../pages/LoginPage'
 import InterventionsPage from '../pages/interventions/InterventionsPage'
 import AchatsPage from '../pages/achats/AchatsPage'
+import PlanningPage from '../pages/planning/PlanningPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -20,7 +21,8 @@ export default function AppRoutes() {
           <AppShell />
         </PrivateRoute>
       }>
-        <Route index element={<Navigate to="/interventions" replace />} />
+        <Route index element={<Navigate to="/planning" replace />} />
+        <Route path="planning" element={<PlanningPage />} />
         <Route path="interventions" element={<InterventionsPage />} />
         <Route path="achats" element={<AchatsPage />} />
       </Route>

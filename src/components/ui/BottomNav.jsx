@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { Wrench, ShoppingCart } from 'lucide-react'
+import { Wrench, ShoppingCart, Calendar } from 'lucide-react'
 
 const NAV_ITEMS = [
+  { to: '/planning', icon: Calendar, label: 'Planning' },
   { to: '/interventions', icon: Wrench, label: 'Interventions' },
   { to: '/achats', icon: ShoppingCart, label: 'Achats' },
 ]
