@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { X, ChevronLeft, Loader2, Check, Wrench, Clock, AlignLeft, Gauge } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
+import { AsyncSearchSelect, SelectionChip } from '../../components/ui/AsyncSearchSelect'
 import {
   searchInterventions,
   searchDI,
@@ -24,49 +25,9 @@ for (let q = 1; q <= 48; q++) {
 }
 
 const inputClass = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
-const labelClass = 'block text-[11px] font-medium uppercase tracking-wide text-tunnel-muted mb-1'
+const labelClass = 'block text-[11px] font-medium uppercase tracking-wide text-tunnel-muted mb-1.5'
 
-function EquipSearch({ value, onChange, onSelect }) {
-  const [suggestions, setSuggestions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const t = useRef(null)
-
-  function handleChange(e) {
-    const v = e.target.value
-    onChange(v)
-    clearTimeout(t.current)
-    if (v.length < 2) { setSuggestions([]); return }
-    t.current = setTimeout(() => {
-      setLoading(true)
-      getEquipements(v)
-        .then(setSuggestions)
-        .catch(() => setSuggestions([]))
-        .finally(() => setLoading(false))
-    }, 300)
-  }
-
-  return (
-    <div className="relative">
-      <label className={labelClass}>Équipement</label>
-      <input type="text" className={inputClass} placeholder="Rechercher..." value={value} onChange={handleChange} />
-      {loading && <Loader2 size={14} className="absolute right-3 top-8 animate-spin text-tunnel-muted" />}
-      {suggestions.length > 0 && (
-        <ul className="absolute z-20 w-full mt-1 bg-white border border-tunnel-border rounded-lg shadow-lg overflow-hidden">
-          {suggestions.slice(0, 6).map(eq => (
-            <li key={eq.id}>
-              <button type="button" className="w-full text-left px-3 py-2.5 text-sm active:bg-tunnel-bg"
-                onClick={() => { onSelect(eq); setSuggestions([]) }}>
-                <span className="font-medium">{eq.name}</span>
-                {eq.code && <span className="ml-2 font-mono text-xs text-tunnel-muted">{eq.code}</span>}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
+// ─── Étape 1 : choix du contexte ─────────────────────────────────────────────
 function Step1({ onChoice }) {
   const choices = [
     { key: '2a', label: 'Intervention existante', sub: 'Rattacher à une intervention déjà créée' },
@@ -87,68 +48,42 @@ function Step1({ onChoice }) {
   )
 }
 
+// ─── Étape 2a : intervention existante ───────────────────────────────────────
 function Step2aInterventions({ onSelect }) {
-  const [all, setAll] = useState([])
-  const [query, setQuery] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    searchInterventions()
-      .then(setAll)
-      .catch(() => setAll([]))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const filtered = query.trim()
-    ? all.filter(i =>
-        (i.code ?? '').toLowerCase().includes(query.toLowerCase()) ||
-        (i.title ?? i.description ?? '').toLowerCase().includes(query.toLowerCase()))
-    : all
-
   return (
     <div className="p-4 space-y-3">
-      <input type="text" className={inputClass} placeholder="Filtrer par code ou titre..." value={query}
-        onChange={e => setQuery(e.target.value)} />
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-tunnel-muted" /></div>
-      ) : (
-        <ul className="space-y-2">
-          {filtered.slice(0, 20).map(inter => (
-            <li key={inter.id}>
-              <button type="button" onClick={() => onSelect(inter)}
-                className="w-full text-left p-3 rounded-lg border border-tunnel-border bg-white active:bg-tunnel-bg">
-                <span className="font-mono text-xs text-tunnel-muted">{inter.code}</span>
-                <p className="text-sm font-medium text-tunnel-text mt-0.5 line-clamp-1">{inter.title ?? inter.description}</p>
-                {inter.machine_name && <p className="text-xs text-tunnel-muted mt-0.5">{inter.machine_name}</p>}
-              </button>
-            </li>
-          ))}
-          {filtered.length === 0 && <p className="text-center text-sm text-tunnel-muted py-6">Aucun résultat</p>}
-        </ul>
-      )}
+      <p className="text-xs text-tunnel-muted">Rechercher une intervention active</p>
+      <AsyncSearchSelect
+        fetchFn={q => searchInterventions({ search: q, limit: 20, status: 'ouvert,en_cours,en_attente' })}
+        onSelect={onSelect}
+        renderItem={inter => (
+          <div className="min-w-0 flex-1">
+            <span className="font-mono text-xs text-tunnel-muted">{inter.code}</span>
+            <p className="text-sm font-medium text-tunnel-text mt-0.5 line-clamp-1">
+              {inter.title ?? inter.description ?? '—'}
+            </p>
+            {(inter.machine_name ?? inter.equipements?.name) && (
+              <p className="text-xs text-tunnel-muted truncate">
+                {inter.machine_name ?? inter.equipements?.name}
+              </p>
+            )}
+          </div>
+        )}
+        placeholder="Rechercher par code ou description..."
+        minChars={1}
+        debounceMs={350}
+      />
     </div>
   )
 }
 
+// ─── Étape 2b : DI existante → créer intervention ────────────────────────────
 function Step2bDI({ onSelect }) {
-  const [all, setAll] = useState([])
-  const [query, setQuery] = useState('')
-  const [loading, setLoading] = useState(true)
   const [selectedDI, setSelectedDI] = useState(null)
   const [form, setForm] = useState({ type_inter: '', priority: 'normale' })
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState(null)
   const { user } = useAuth()
-
-  useEffect(() => {
-    searchDI().then(setAll).catch(() => setAll([])).finally(() => setLoading(false))
-  }, [])
-
-  const filtered = query.trim()
-    ? all.filter(d =>
-        (d.code ?? '').toLowerCase().includes(query.toLowerCase()) ||
-        (d.description ?? '').toLowerCase().includes(query.toLowerCase()))
-    : all
 
   async function handleCreateInter() {
     if (!form.type_inter) { setErr('Type requis'); return }
@@ -171,24 +106,27 @@ function Step2bDI({ onSelect }) {
 
   if (selectedDI) return (
     <div className="p-4 space-y-4">
-      <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-700">
-        DI sélectionnée : <strong>{selectedDI.code}</strong>
-      </div>
+      <SelectionChip
+        badge={selectedDI.code}
+        label={selectedDI.description ?? selectedDI.code}
+        onClear={() => { setSelectedDI(null); setErr(null) }}
+      />
       {err && <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>}
       <div>
         <label className={labelClass}>Type d'intervention *</label>
         <input type="text" required className={inputClass} value={form.type_inter}
-          onChange={e => setForm(p => ({ ...p, type_inter: e.target.value }))} placeholder="Ex: curative, préventive..." />
+          onChange={e => setForm(p => ({ ...p, type_inter: e.target.value }))}
+          placeholder="Ex : curative, préventive..." />
       </div>
       <div>
         <label className={labelClass}>Priorité</label>
         <select className={inputClass} value={form.priority}
           onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}>
-          {[['faible','Faible'],['normale','Normale'],['important','Important'],['urgent','Urgent']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+          {[['faible','Faible'],['normale','Normale'],['important','Important'],['urgent','Urgent']]
+            .map(([v,l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
-      <button type="button" disabled={submitting}
-        onClick={handleCreateInter}
+      <button type="button" disabled={submitting} onClick={handleCreateInter}
         className="w-full py-3 rounded-xl bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
         {submitting && <Loader2 size={14} className="animate-spin" />}
         Créer l'intervention
@@ -198,32 +136,33 @@ function Step2bDI({ onSelect }) {
 
   return (
     <div className="p-4 space-y-3">
-      <input type="text" className={inputClass} placeholder="Filtrer par code ou description..." value={query}
-        onChange={e => setQuery(e.target.value)} />
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-tunnel-muted" /></div>
-      ) : (
-        <ul className="space-y-2">
-          {filtered.slice(0, 20).map(di => (
-            <li key={di.id}>
-              <button type="button" onClick={() => setSelectedDI(di)}
-                className="w-full text-left p-3 rounded-lg border border-tunnel-border bg-white active:bg-tunnel-bg">
-                <span className="font-mono text-xs text-tunnel-muted">{di.code}</span>
-                <p className="text-sm font-medium text-tunnel-text mt-0.5 line-clamp-2">{di.description}</p>
-                {di.machine_name && <p className="text-xs text-tunnel-muted mt-0.5">{di.machine_name}</p>}
-              </button>
-            </li>
-          ))}
-          {filtered.length === 0 && <p className="text-center text-sm text-tunnel-muted py-6">Aucun résultat</p>}
-        </ul>
-      )}
+      <p className="text-xs text-tunnel-muted">Rechercher une demande d'intervention</p>
+      <AsyncSearchSelect
+        fetchFn={q => searchDI({ search: q, limit: 20 })}
+        onSelect={setSelectedDI}
+        renderItem={di => (
+          <div className="min-w-0 flex-1">
+            <span className="font-mono text-xs text-tunnel-muted">{di.code}</span>
+            <p className="text-sm font-medium text-tunnel-text mt-0.5 line-clamp-2">{di.description}</p>
+            {(di.machine_name ?? di.equipement?.name) && (
+              <p className="text-xs text-tunnel-muted truncate">
+                {di.machine_name ?? di.equipement?.name}
+              </p>
+            )}
+          </div>
+        )}
+        placeholder="Rechercher par code ou description..."
+        minChars={1}
+        debounceMs={350}
+      />
     </div>
   )
 }
 
+// ─── Étape 2c : nouvelle DI → nouvelle intervention ──────────────────────────
 function Step2cNewDI({ onSelect }) {
   const { user } = useAuth()
-  const [equipSearch, setEquipSearch] = useState('')
+  const [selectedEquip, setSelectedEquip] = useState(null)
   const [form, setForm] = useState({
     machine_id: '',
     demandeur_nom: `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim(),
@@ -231,7 +170,7 @@ function Step2cNewDI({ onSelect }) {
     type_inter: '',
     priority: 'normale',
   })
-  const [stage, setStage] = useState('di') // 'di' | 'inter'
+  const [stage, setStage] = useState('di')
   const [createdDI, setCreatedDI] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState(null)
@@ -240,8 +179,7 @@ function Step2cNewDI({ onSelect }) {
 
   async function handleCreateDI() {
     if (!form.description) { setErr('Description requise'); return }
-    setSubmitting(true)
-    setErr(null)
+    setSubmitting(true); setErr(null)
     try {
       const di = await createDI({
         machine_id: form.machine_id || undefined,
@@ -259,8 +197,7 @@ function Step2cNewDI({ onSelect }) {
 
   async function handleCreateInter() {
     if (!form.type_inter) { setErr('Type requis'); return }
-    setSubmitting(true)
-    setErr(null)
+    setSubmitting(true); setErr(null)
     try {
       const inter = await createIntervention({
         request_id: createdDI.id,
@@ -285,12 +222,13 @@ function Step2cNewDI({ onSelect }) {
       <div>
         <label className={labelClass}>Type d'intervention *</label>
         <input type="text" required className={inputClass} value={form.type_inter}
-          onChange={e => set('type_inter', e.target.value)} placeholder="Ex: curative, préventive..." />
+          onChange={e => set('type_inter', e.target.value)} placeholder="Ex : curative, préventive..." />
       </div>
       <div>
         <label className={labelClass}>Priorité</label>
         <select className={inputClass} value={form.priority} onChange={e => set('priority', e.target.value)}>
-          {[['faible','Faible'],['normale','Normale'],['important','Important'],['urgent','Urgent']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+          {[['faible','Faible'],['normale','Normale'],['important','Important'],['urgent','Urgent']]
+            .map(([v,l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
       <button type="button" disabled={submitting} onClick={handleCreateInter}
@@ -304,8 +242,35 @@ function Step2cNewDI({ onSelect }) {
   return (
     <div className="p-4 space-y-4">
       {err && <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>}
-      <EquipSearch value={equipSearch} onChange={setEquipSearch}
-        onSelect={eq => { set('machine_id', eq.id); setEquipSearch(eq.name ?? eq.code) }} />
+
+      <div>
+        <label className={labelClass}>Équipement</label>
+        {selectedEquip ? (
+          <SelectionChip
+            badge={selectedEquip.code}
+            label={selectedEquip.name ?? selectedEquip.code}
+            onClear={() => { setSelectedEquip(null); set('machine_id', '') }}
+          />
+        ) : (
+          <AsyncSearchSelect
+            fetchFn={getEquipements}
+            onSelect={eq => { setSelectedEquip(eq); set('machine_id', eq.id) }}
+            renderItem={eq => (
+              <>
+                {eq.code && (
+                  <span className="font-mono text-xs bg-tunnel-bg px-1.5 py-0.5 rounded text-tunnel-muted shrink-0">
+                    {eq.code}
+                  </span>
+                )}
+                <span className="text-sm font-medium text-tunnel-text truncate">{eq.name}</span>
+              </>
+            )}
+            placeholder="Rechercher un équipement..."
+            minChars={1}
+          />
+        )}
+      </div>
+
       <div>
         <label className={labelClass}>Demandeur *</label>
         <input type="text" required className={inputClass} value={form.demandeur_nom}
@@ -325,8 +290,7 @@ function Step2cNewDI({ onSelect }) {
   )
 }
 
-const CAT_COLORS = ['blue', 'violet', 'green', 'amber', 'red', 'indigo', 'slate']
-
+// ─── Étape 3 : saisie de l'action ────────────────────────────────────────────
 function Step3Action({ intervention, actionDate, onDone, onCancel }) {
   const { user } = useAuth()
   const [categories, setCategories] = useState([])
@@ -358,17 +322,12 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
       setErr('Heures de début et fin requises'); return
     }
     if (form.complexity_score > 5 && !form.complexity_factor_id) {
-      setErr('Facteur de complexité requis pour un score > 5'); return
+      setErr('Facteur de complexité requis pour score > 5'); return
     }
-    setSubmitting(true)
-    setErr(null)
+    setSubmitting(true); setErr(null)
 
     const now = new Date()
-    const hh = String(now.getHours()).padStart(2, '0')
-    const mm = String(now.getMinutes()).padStart(2, '0')
-    const ss = String(now.getSeconds()).padStart(2, '0')
-    const createdAt = `${actionDate}T${hh}:${mm}:${ss}`
-
+    const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
     const payload = {
       intervention_id: intervention.id,
       action_subcategory: parseInt(form.subcategory_id),
@@ -376,9 +335,8 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
       description: form.description || undefined,
       complexity_score: form.complexity_score,
       complexity_factor: form.complexity_score > 5 ? form.complexity_factor_id : undefined,
-      created_at: createdAt,
+      created_at: `${actionDate}T${ts}`,
     }
-
     if (form.time_mode === 'duration') {
       payload.time_spent = form.time_spent
     } else {
@@ -411,20 +369,21 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
         <div className="p-4 space-y-0">
           {err && <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>}
 
-          {/* Intervention */}
-          <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 border border-tunnel-border">
-            <Wrench size={13} className="text-tunnel-muted shrink-0" />
+          {/* Intervention liée */}
+          <div className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-50 border border-tunnel-accent/20">
+            <Wrench size={13} className="text-tunnel-accent shrink-0" />
             <span className="font-mono text-xs font-semibold text-tunnel-text">{intervention.code}</span>
             {intervention.title && <span className="text-xs text-tunnel-muted truncate">— {intervention.title}</span>}
           </div>
 
-          {/* Type / sous-catégorie */}
+          {/* Type */}
           <div className="mb-4">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Wrench size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Type d'action *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-tunnel-text">Type d'action *</label>
             </div>
-            <select className={inputClass} value={form.subcategory_id} onChange={e => set('subcategory_id', e.target.value)}>
+            <select className={inputClass} value={form.subcategory_id}
+              onChange={e => set('subcategory_id', e.target.value)}>
               <option value="">Sélectionner...</option>
               {categories.map(cat => (
                 <optgroup key={cat.id} label={cat.name}>
@@ -436,11 +395,11 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
             </select>
           </div>
 
-          {/* Plage horaire / durée */}
+          {/* Durée */}
           <div className="mb-4">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Clock size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Durée *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-tunnel-text">Durée *</label>
               <div className="ml-auto flex rounded border border-tunnel-border overflow-hidden">
                 {[['duration','Durée'],['bounds','Plage']].map(([m, l]) => (
                   <button key={m} type="button" onClick={() => set('time_mode', m)}
@@ -453,9 +412,7 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
             {form.time_mode === 'duration' ? (
               <select className={inputClass} value={form.time_spent}
                 onChange={e => set('time_spent', parseFloat(e.target.value))}>
-                {QUARTER_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+                {QUARTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             ) : (
               <div className="flex gap-2 items-center">
@@ -472,16 +429,12 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
           <div className="mb-4">
             <div className="flex items-center gap-1.5 mb-1.5">
               <AlignLeft size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Description de l'action</label>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-tunnel-text">Description</label>
               <span className="ml-1 text-[10px] text-tunnel-accent font-medium">Obligatoire</span>
             </div>
-            <textarea
-              className={`${inputClass} resize-none`}
-              rows={4}
-              value={form.description}
-              onChange={e => set('description', e.target.value)}
-              placeholder="Décris en détail ce qui a été fait : diagnostic, réparation, remplacement..."
-            />
+            <textarea className={`${inputClass} resize-none`} rows={4}
+              value={form.description} onChange={e => set('description', e.target.value)}
+              placeholder="Décris en détail ce qui a été fait : diagnostic, réparation, remplacement..." />
             <p className="text-[10px] text-tunnel-muted mt-1">Sois précis : cela aide pour l'analyse et les prochaines interventions</p>
           </div>
 
@@ -489,7 +442,7 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
           <div className="mb-4">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Gauge size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Complexité *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wide text-tunnel-text">Complexité *</label>
             </div>
             <select className={inputClass} value={form.complexity_score}
               onChange={e => set('complexity_score', parseInt(e.target.value))}>
@@ -502,7 +455,9 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
 
           {form.complexity_score > 5 && (
             <div className="mb-4">
-              <label className={labelClass}>Facteur de complexité *</label>
+              <label className="block text-[11px] font-bold uppercase tracking-wide text-tunnel-text mb-1.5">
+                Facteur de complexité *
+              </label>
               <select className={inputClass} value={form.complexity_factor_id}
                 onChange={e => set('complexity_factor_id', e.target.value)}>
                 <option value="">Sélectionner...</option>
@@ -513,7 +468,6 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
         </div>
       </div>
 
-      {/* Footer fixe Annuler / Enregistrer */}
       <div className="shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white">
         <button type="button" onClick={onCancel}
           className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
@@ -529,19 +483,19 @@ function Step3Action({ intervention, actionDate, onDone, onCancel }) {
   )
 }
 
+// ─── Titres par étape ─────────────────────────────────────────────────────────
 const STEP_TITLES = {
-  '1': 'Nouveau contexte',
+  '1':  'Nouveau contexte',
   '2a': 'Intervention existante',
   '2b': 'DI existante',
   '2c': 'Nouvelle DI',
-  '3': 'Saisir l\'action',
+  '3':  'Saisir l\'action',
 }
 
+// ─── Composant racine ─────────────────────────────────────────────────────────
 export function ActionForm({ actionDate, onClose, onDone }) {
   const [step, setStep] = useState('1')
   const [intervention, setIntervention] = useState(null)
-
-  function handleChoice(key) { setStep(key) }
 
   function handleInterventionSelected(inter) {
     setIntervention(inter)
@@ -567,12 +521,17 @@ export function ActionForm({ actionDate, onClose, onDone }) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {step === '1' && <Step1 onChoice={handleChoice} />}
+        {step === '1'  && <Step1 onChoice={key => setStep(key)} />}
         {step === '2a' && <Step2aInterventions onSelect={handleInterventionSelected} />}
         {step === '2b' && <Step2bDI onSelect={handleInterventionSelected} />}
         {step === '2c' && <Step2cNewDI onSelect={handleInterventionSelected} />}
         {step === '3' && intervention && (
-          <Step3Action intervention={intervention} actionDate={actionDate} onDone={() => { onDone(); onClose() }} onCancel={onClose} />
+          <Step3Action
+            intervention={intervention}
+            actionDate={actionDate}
+            onDone={() => { onDone(); onClose() }}
+            onCancel={onClose}
+          />
         )}
       </div>
     </div>

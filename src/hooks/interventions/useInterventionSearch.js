@@ -1,33 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { searchInterventions } from '../../api/interventions'
+import { useDebounce } from '../shared/useDebounce'
 
 export function useInterventionSearch() {
   const [query, setQuery] = useState('')
-  const [all, setAll] = useState([])
+  const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const t = useRef(null)
+
+  const debouncedQuery = useDebounce(query, 350)
 
   useEffect(() => {
-    searchInterventions({ status: 'ouvert,en_cours,en_attente' })
-      .then(setAll)
+    setLoading(true)
+    setError(null)
+    const params = { limit: 30, status: 'ouvert,en_cours,en_attente' }
+    if (debouncedQuery.trim()) params.search = debouncedQuery.trim()
+    searchInterventions(params)
+      .then(setResults)
       .catch(err => setError(err?.data?.detail ?? err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [debouncedQuery])
 
-  const results = query.trim().length < 2
-    ? all
-    : all.filter(i => {
-        const q = query.toLowerCase()
-        return (i.code ?? '').toLowerCase().includes(q)
-          || (i.title ?? i.description ?? '').toLowerCase().includes(q)
-          || (i.machine_name ?? i.equipements?.name ?? '').toLowerCase().includes(q)
-      })
-
-  function handleQueryChange(value) {
-    clearTimeout(t.current)
-    t.current = setTimeout(() => setQuery(value), 200)
-  }
-
-  return { query, setQuery: handleQueryChange, results, loading, error }
+  return { query, setQuery, results, loading, error }
 }

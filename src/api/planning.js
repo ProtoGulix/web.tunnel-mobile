@@ -9,8 +9,9 @@ export function createAction(data) {
   return client.post('/intervention-actions', data)
 }
 
-export function searchInterventions() {
-  return client.get('/interventions?limit=20').then(res => res.items ?? res)
+export function searchInterventions(params = {}) {
+  const query = new URLSearchParams({ limit: 20, ...params }).toString()
+  return client.get(`/interventions?${query}`).then(res => res.items ?? res)
 }
 
 export function getActionCategories() {
@@ -29,6 +30,7 @@ export function createDI(data) {
   return client.post('/intervention-requests', data)
 }
 
-export function searchDI() {
-  return client.get('/intervention-requests?exclude_statuses=rejetee,cloturee&limit=30').then(res => res.items ?? res)
+export function searchDI(params = {}) {
+  const query = new URLSearchParams({ exclude_statuses: 'rejetee,cloturee', limit: 30, ...params }).toString()
+  return client.get(`/intervention-requests?${query}`).then(res => res.items ?? res)
 }
