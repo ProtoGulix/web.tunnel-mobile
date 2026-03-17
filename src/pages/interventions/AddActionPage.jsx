@@ -1,39 +1,85 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Check, Loader2, Wrench, Clock, AlignLeft, Gauge } from 'lucide-react'
+import { ChevronLeft, Plus, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
+import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { getActionCategories, getComplexityFactors, createAction } from '../../api/planning'
 
-const QUARTER_OPTIONS = Array.from({ length: 48 }, (_, i) => {
-  const total = (i + 1) * 0.25
-  const h = Math.floor(total)
-  const m = Math.round((total - h) * 60)
-  return { value: total, label: h === 0 ? `0h${String(m).padStart(2,'0')}` : m === 0 ? `${h}h00` : `${h}h${String(m).padStart(2,'0')}` }
-})
+// ─── Styles partagés ────────────────────────────────────────────────────────
+const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
+const labelCls = 'flex items-center gap-1.5 mb-1.5'
 
-const inputClass = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
-const labelClass = 'block text-[11px] font-medium uppercase tracking-wide text-tunnel-muted mb-1'
+// ─── Sélecteur de catégorie (bottom-sheet) ───────────────────────────────────
+function CategoryPicker({ categories, selected, onSelect, onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col justify-end"
+      style={{ background: 'rgba(0,0,0,0.35)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-t-2xl max-h-[72vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="px-4 pt-4 pb-3 border-b border-tunnel-border shrink-0 flex items-center justify-between">
+          <p className="text-sm font-semibold text-tunnel-text">Type d'action</p>
+          <button onClick={onClose} className="text-xs text-tunnel-muted font-medium px-2 py-1">Fermer</button>
+        </div>
+        <div className="overflow-y-auto">
+          {categories.map(cat => (
+            <div key={cat.id}>
+              {/* En-tête catégorie — non sélectionnable */}
+              <div
+                className="px-4 py-2 text-xs font-bold text-gray-600 bg-gray-50"
+                style={{
+                  borderLeft: `4px solid ${cat.color || '#6b7280'}`,
+                  borderBottom: '1px solid var(--tunnel-border, #e2e8f0)',
+                }}
+              >
+                {cat.name}
+              </div>
+              {/* Sous-catégories */}
+              {(cat.subcategories ?? []).map(sub => {
+                const isActive = String(sub.id) === String(selected)
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => { onSelect(String(sub.id)); onClose() }}
+                    className={`w-full flex items-center gap-3 pl-6 pr-4 py-3 border-b border-tunnel-border text-left ${isActive ? 'bg-blue-50' : 'bg-white active:bg-tunnel-bg'}`}
+                  >
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold text-white shrink-0"
+                      style={{ backgroundColor: cat.color || '#6b7280' }}
+                    >
+                      {sub.code}
+                    </span>
+                    <span className="flex-1 text-sm text-tunnel-text">{sub.name}</span>
+                    {isActive && <Check size={14} className="text-tunnel-accent shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
+// ─── Page principale ─────────────────────────────────────────────────────────
 export default function AddActionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { intervention, loading: loadingInter } = useInterventionDetail(id)
+  const { formState, handlers, validation } = useActionForm()
+
   const [categories, setCategories] = useState([])
   const [factors, setFactors] = useState([])
-  const [form, setForm] = useState({
-    subcategory_id: '',
-    description: '',
-    time_mode: 'duration',
-    time_spent: 0.5,
-    action_start: '',
-    action_end: '',
-    complexity_score: 5,
-    complexity_factor_id: '',
-  })
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [err, setErr] = useState(null)
+  const [submitError, setSubmitError] = useState(null)
   const [done, setDone] = useState(false)
 
   useEffect(() => {
@@ -41,52 +87,44 @@ export default function AddActionPage() {
     getComplexityFactors().then(setFactors).catch(() => setFactors([]))
   }, [])
 
-  function set(field, value) { setForm(p => ({ ...p, [field]: value })) }
+  // Sous-catégorie sélectionnée pour l'affichage du trigger
+  const selectedSubcat = useMemo(() => {
+    for (const cat of categories) {
+      const sub = cat.subcategories?.find(s => String(s.id) === String(formState.category))
+      if (sub) return { sub, cat }
+    }
+    return null
+  }, [categories, formState.category])
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.subcategory_id) { setErr('Sous-catégorie requise'); return }
-    if (form.time_mode === 'bounds' && (!form.action_start || !form.action_end)) {
-      setErr('Heures de début et fin requises'); return
-    }
-    if (form.complexity_score > 5 && !form.complexity_factor_id) {
-      setErr('Facteur de complexité requis pour score > 5'); return
-    }
+    if (!handlers.handleValidate()) return
     setSubmitting(true)
-    setErr(null)
+    setSubmitError(null)
 
     const now = new Date()
-    const hh = String(now.getHours()).padStart(2, '0')
-    const mm = String(now.getMinutes()).padStart(2, '0')
-    const ss = String(now.getSeconds()).padStart(2, '0')
-    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
-
-    const payload = {
-      intervention_id: id,
-      action_subcategory: parseInt(form.subcategory_id),
-      tech: user.id,
-      description: form.description || undefined,
-      complexity_score: form.complexity_score,
-      complexity_factor: form.complexity_score > 5 ? form.complexity_factor_id : undefined,
-      created_at: `${today}T${hh}:${mm}:${ss}`,
-    }
-    if (form.time_mode === 'duration') {
-      payload.time_spent = form.time_spent
-    } else {
-      payload.action_start = form.action_start.length === 5 ? `${form.action_start}:00` : form.action_start
-      payload.action_end = form.action_end.length === 5 ? `${form.action_end}:00` : form.action_end
-    }
+    const ts = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`
 
     try {
-      await createAction(payload)
+      await createAction({
+        intervention_id: id,
+        action_subcategory: Number(formState.category) || undefined,
+        tech: user.id,
+        description: formState.description,
+        time_spent: formState.time ? Number(formState.time) : undefined,
+        complexity_score: Number(formState.complexity),
+        complexity_factor: Number(formState.complexity) > 5 ? formState.complexityFactors[0] : undefined,
+        created_at: formState.date ? `${formState.date}T${ts}` : undefined,
+      })
       setDone(true)
-      setTimeout(() => navigate(`/interventions/${id}`, { replace: true }), 800)
-    } catch (e) {
-      setErr(e?.data?.detail ?? e.message)
+      setTimeout(() => navigate(`/interventions/${id}`, { replace: true }), 700)
+    } catch (err) {
+      setSubmitError(err?.data?.detail ?? err.message)
       setSubmitting(false)
     }
   }
 
+  // ── État succès ──
   if (done) return (
     <div className="flex flex-col items-center justify-center h-full gap-3 bg-white">
       <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -96,125 +134,227 @@ export default function AddActionPage() {
     </div>
   )
 
+  const hasErrors = validation.errors.length > 0
+
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-2 py-3 border-b border-tunnel-border shrink-0">
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-2 px-2 py-3 border-b border-tunnel-border shrink-0 bg-blue-50">
         <button onClick={() => navigate(-1)} className="p-2 text-tunnel-muted">
           <ChevronLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-tunnel-text">Nouvelle action</h2>
+          <div className="flex items-center gap-2">
+            <Plus size={16} color="var(--color-blue-600, #2563eb)" />
+            <h2 className="text-sm font-bold text-tunnel-text">Nouvelle action</h2>
+          </div>
           {!loadingInter && intervention && (
-            <p className="text-xs text-tunnel-muted font-mono truncate">{intervention.code}</p>
+            <p className="text-xs text-tunnel-muted font-mono truncate mt-0.5">{intervention.code}</p>
           )}
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {err && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>
-          )}
+      {/* ── Formulaire ── */}
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-5">
 
-          {/* Type */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <Wrench size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Type d'action *</label>
-            </div>
-            <select className={inputClass} value={form.subcategory_id} onChange={e => set('subcategory_id', e.target.value)}>
-              <option value="">Sélectionner...</option>
-              {categories.map(cat => (
-                <optgroup key={cat.id} label={cat.name}>
-                  {(cat.subcategories ?? []).map(sub => (
-                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+            {/* Erreurs de validation */}
+            {(hasErrors || submitError) && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-300">
+                <p className="text-xs font-bold text-red-700 mb-1.5">Erreurs de validation</p>
+                <div className="space-y-0.5">
+                  {validation.errors.map((err, i) => (
+                    <p key={i} className="text-xs text-red-700">• {err}</p>
                   ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-
-          {/* Durée */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <Clock size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Durée *</label>
-              <div className="ml-auto flex rounded border border-tunnel-border overflow-hidden">
-                {[['duration','Durée'],['bounds','Plage']].map(([m, l]) => (
-                  <button key={m} type="button" onClick={() => set('time_mode', m)}
-                    className={`px-2.5 py-1 text-[11px] font-medium ${form.time_mode === m ? 'bg-tunnel-accent text-white' : 'bg-white text-tunnel-muted'}`}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {form.time_mode === 'duration' ? (
-              <select className={inputClass} value={form.time_spent} onChange={e => set('time_spent', parseFloat(e.target.value))}>
-                {QUARTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            ) : (
-              <div className="flex gap-2 items-center">
-                <input type="time" className={inputClass} value={form.action_start} onChange={e => set('action_start', e.target.value)} />
-                <span className="text-tunnel-muted text-sm">à</span>
-                <input type="time" className={inputClass} value={form.action_end} onChange={e => set('action_end', e.target.value)} />
+                  {submitError && <p className="text-xs text-red-700">• {submitError}</p>}
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Description */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <AlignLeft size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Description</label>
+            {/* ── Ligne 1 : Temps | Date | Type ── */}
+            <div className="flex gap-3 flex-wrap">
+
+              {/* Temps */}
+              <div style={{ flex: '1', minWidth: '90px' }}>
+                <div className={labelCls}>
+                  <Clock size={14} className="text-tunnel-muted" />
+                  <span className="text-xs font-bold text-tunnel-text">Temps</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    placeholder="0.5"
+                    value={formState.time}
+                    onChange={e => handlers.handleTimeChange(e.target.value)}
+                    className={inputCls + ' pr-7'}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-tunnel-muted select-none">h</span>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div style={{ flex: '1', minWidth: '110px' }}>
+                <div className={labelCls}>
+                  <CalendarDays size={14} className="text-tunnel-muted" />
+                  <span className="text-xs font-bold text-tunnel-text">Date</span>
+                </div>
+                <input
+                  type="date"
+                  value={formState.date}
+                  onChange={e => handlers.handleDateChange(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+
+              {/* Type / catégorie */}
+              <div style={{ flex: '2', minWidth: '140px' }}>
+                <div className={labelCls}>
+                  <Tag size={14} className="text-tunnel-muted" />
+                  <span className="text-xs font-bold text-tunnel-text">Type</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryPicker(true)}
+                  className={`w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 bg-white text-left focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent ${!selectedSubcat ? 'text-tunnel-muted' : 'text-tunnel-text'}`}
+                >
+                  {selectedSubcat ? (
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-white shrink-0"
+                        style={{ backgroundColor: selectedSubcat.cat.color || '#6b7280' }}
+                      >
+                        {selectedSubcat.sub.code}
+                      </span>
+                      <span className="text-sm truncate">{selectedSubcat.sub.name}</span>
+                    </span>
+                  ) : (
+                    <span className="text-sm text-tunnel-muted">Sélectionner...</span>
+                  )}
+                  <ChevronDown size={14} className="text-tunnel-muted shrink-0" />
+                </button>
+              </div>
             </div>
-            <textarea
-              className={`${inputClass} resize-none`}
-              rows={4}
-              value={form.description}
-              onChange={e => set('description', e.target.value)}
-              placeholder="Décris ce qui a été fait : diagnostic, réparation, remplacement..."
-            />
-          </div>
 
-          {/* Complexité */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <Gauge size={12} className="text-tunnel-muted" />
-              <label className={labelClass + ' mb-0'}>Complexité *</label>
-            </div>
-            <select className={inputClass} value={form.complexity_score} onChange={e => set('complexity_score', parseInt(e.target.value))}>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                <option key={n} value={n}>{n} — {n <= 3 ? 'Simple' : n <= 6 ? 'Modérée' : n <= 8 ? 'Complexe' : 'Très complexe'}</option>
-              ))}
-            </select>
-          </div>
-
-          {form.complexity_score > 5 && (
+            {/* ── Description ── */}
             <div>
-              <label className={labelClass}>Facteur de complexité *</label>
-              <select className={inputClass} value={form.complexity_factor_id} onChange={e => set('complexity_factor_id', e.target.value)}>
-                <option value="">Sélectionner...</option>
-                {factors.map(f => <option key={f.code} value={f.code}>{f.label}</option>)}
-              </select>
+              <div className={labelCls}>
+                <AlignLeft size={16} className="text-tunnel-muted" />
+                <span className="text-xs font-bold text-tunnel-text">Description de l'action</span>
+                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
+                  Obligatoire
+                </span>
+              </div>
+              <textarea
+                className={`${inputCls} resize-none`}
+                rows={4}
+                value={formState.description}
+                onChange={e => handlers.handleDescriptionChange(e.target.value)}
+                placeholder="Décris en détail ce qui a été fait : diagnostic, réparation, remplacement..."
+              />
+              <p className="text-[11px] text-tunnel-muted mt-1">
+                Sois précis : cela aide pour l'analyse et les prochaines interventions
+              </p>
             </div>
-          )}
+
+            {/* ── Facteurs de complexité (si score > 5) ── */}
+            {validation.shouldShowComplexityFactors && (
+              <div>
+                <div className={labelCls}>
+                  <BarChart3 size={16} className="text-orange-500" />
+                  <span className="text-xs font-bold text-tunnel-text">Facteurs de complexité</span>
+                  <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-700">
+                    Obligatoire pour complexité &gt; 5
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {factors.map(factor => {
+                    const code = factor.code ?? factor.id
+                    const isSelected = formState.complexityFactors.includes(code)
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => handlers.handleComplexityFactorToggle(code)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                          isSelected
+                            ? 'bg-orange-500 text-white border-orange-500'
+                            : 'bg-gray-100 text-gray-700 border-gray-200 active:bg-gray-200'
+                        }`}
+                      >
+                        {factor.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-[11px] text-tunnel-muted mt-2">
+                  Sélectionne les facteurs qui ont rendu cette action complexe
+                </p>
+              </div>
+            )}
+
+            {/* ── Complexité ── */}
+            <div>
+              <div className={labelCls}>
+                <BarChart3 size={16} className="text-tunnel-muted" />
+                <span className="text-xs font-bold text-tunnel-text">Complexité</span>
+              </div>
+              <select
+                className={inputCls}
+                value={formState.complexity}
+                onChange={e => handlers.handleComplexityChange(e.target.value)}
+              >
+                <option value="1">1 — Très simple</option>
+                <option value="2">2 — Simple</option>
+                <option value="3">3 — Facile</option>
+                <option value="4">4 — Moyen-</option>
+                <option value="5">5 — Moyen</option>
+                <option value="6">6 — Moyen+</option>
+                <option value="7">7 — Difficile</option>
+                <option value="8">8 — Complexe</option>
+                <option value="9">9 — Très complexe</option>
+                <option value="10">10 — Expert</option>
+              </select>
+              <p className="text-[11px] text-tunnel-muted mt-1">
+                Évalue la difficulté de l'intervention
+              </p>
+            </div>
+
+          </div>
         </div>
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div className="shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white safe-bottom">
-          <button type="button" onClick={() => navigate(-1)}
-            className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
+          <button
+            type="button"
+            onClick={() => { handlers.handleReset(); navigate(-1) }}
+            className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg"
+          >
             Annuler
           </button>
-          <button type="submit" disabled={submitting}
-            className="flex-1 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+          <button
+            type="submit"
+            disabled={submitting || hasErrors}
+            className="flex-1 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
             Enregistrer
           </button>
         </div>
       </form>
+
+      {/* ── Category picker ── */}
+      {showCategoryPicker && (
+        <CategoryPicker
+          categories={categories}
+          selected={formState.category}
+          onSelect={handlers.handleCategoryChange}
+          onClose={() => setShowCategoryPicker(false)}
+        />
+      )}
     </div>
   )
 }
