@@ -4,7 +4,12 @@
       "Read(//c/Users/Quentin/DEV/web.tunnel-backend/docs/**)",
       "Read(//c/Users/Quentin/DEV/web.tunnel-backend/docs/endpoints/**)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 199084 /F)",
+      "Bash(taskkill /PID 89596 /F)",
+      "Bash(cmd /c \"taskkill /PID 199084 /F && taskkill /PID 89596 /F\")",
+      "Bash(node --input-type=module:*)"
     ]
   }
 }
