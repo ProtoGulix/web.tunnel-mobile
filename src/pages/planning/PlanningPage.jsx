@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Loader2, Clock } from 'lucide-react'
 import { usePlanningWeek } from '../../hooks/planning/usePlanningWeek'
 import { ActionCard } from './ActionCard'
-import { ActionForm } from './ActionForm'
+import { ActionForm } from '../../components/actions/ActionForm'
 
 const DAY_NAMES = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
 const MONTH_SHORT = ['jan.', 'fév.', 'mar.', 'avr.', 'mai', 'jun.', 'jul.', 'aoû.', 'sep.', 'oct.', 'nov.', 'déc.']

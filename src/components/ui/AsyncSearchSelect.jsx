@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Search, Loader2, HelpCircle, Info, SearchX, Plus, X } from 'lucide-react'
+import { Search, Loader2, HelpCircle, Info, SearchX, Plus, X, Lock } from 'lucide-react'
 import { useDebounce } from '../../hooks/shared/useDebounce'
 
 // ─── Boîte d'état fixe (évite le layout shift) ────────────────────────────────
@@ -23,18 +23,30 @@ function StateBox({ children }) {
 }
 
 // ─── Chip de sélection (remplace le champ après sélection) ────────────────────
-export function SelectionChip({ badge, label, onClear }) {
+export function SelectionChip({ badge, label, onClear, locked = false }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-tunnel-accent/30 bg-blue-50">
+    <div className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border ${
+      locked
+        ? 'border-amber-300 bg-amber-50'
+        : 'border-tunnel-accent/30 bg-blue-50'
+    }`}>
       {badge && (
-        <span className="font-mono text-xs font-semibold text-tunnel-accent bg-white px-1.5 py-0.5 rounded border border-tunnel-accent/20 shrink-0">
+        <span className={`font-mono text-xs font-semibold px-1.5 py-0.5 rounded border shrink-0 ${
+          locked
+            ? 'text-amber-700 bg-white border-amber-300'
+            : 'text-tunnel-accent bg-white border-tunnel-accent/20'
+        }`}>
           {badge}
         </span>
       )}
       <span className="flex-1 text-sm font-medium text-tunnel-text truncate">{label}</span>
-      <button type="button" onClick={onClear} className="shrink-0 text-tunnel-muted p-0.5">
-        <X size={14} />
-      </button>
+      {locked ? (
+        <Lock size={13} className="shrink-0 text-amber-500" />
+      ) : (
+        <button type="button" onClick={onClear} className="shrink-0 text-tunnel-muted p-0.5">
+          <X size={14} />
+        </button>
+      )}
     </div>
   )
 }

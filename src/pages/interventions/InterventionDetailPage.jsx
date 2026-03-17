@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus } from '../../api/interventions'
 import { ActionCard } from '../../components/interventions/ActionCard'
+import { ActionForm } from '../../components/actions/ActionForm'
 
 const STATUS_COLORS = {
   ouvert: '#22c55e',
@@ -102,6 +103,7 @@ export default function InterventionDetailPage() {
   const { user } = useAuth()
   const { intervention, loading, error, reload } = useInterventionDetail(id)
   const [showStatusSheet, setShowStatusSheet] = useState(false)
+  const [showActionForm, setShowActionForm] = useState(false)
 
   const statusCode = intervention?.status_actual ?? intervention?.statut ?? ''
   const statusColor = STATUS_COLORS[statusCode]
@@ -236,7 +238,7 @@ export default function InterventionDetailPage() {
             DA
           </button>
           <button
-            onClick={() => navigate(`/interventions/${id}/add-action`)}
+            onClick={() => setShowActionForm(true)}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold active:opacity-90"
           >
             <Plus size={16} />
@@ -250,6 +252,15 @@ export default function InterventionDetailPage() {
           statusCode={statusCode}
           onClose={() => setShowStatusSheet(false)}
           onChange={handleStatusChange}
+        />
+      )}
+
+      {showActionForm && (
+        <ActionForm
+          onClose={() => setShowActionForm(false)}
+          onDone={reload}
+          defaultEquip={eq}
+          defaultIntervention={intervention}
         />
       )}
     </div>
