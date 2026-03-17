@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :root {
+    --tunnel-dark: #1a2332;
+    --tunnel-accent: #3b82f6;
+    --tunnel-bg: #f8fafc;
+    --tunnel-card: #ffffff;
+    --tunnel-border: #e2e8f0;
+    --tunnel-text: #0f172a;
+    --tunnel-muted: #64748b;
+    --bottom-nav-height: 64px;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

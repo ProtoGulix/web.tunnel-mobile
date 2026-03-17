@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Quentin/DEV/web.tunnel-backend/docs/**)",
+      "Read(//c/Users/Quentin/DEV/web.tunnel-backend/docs/endpoints/**)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
