@@ -1,3 +1,5 @@
+import { ShoppingCart, Plus } from 'lucide-react'
+
 function formatTime(hours) {
   if (!hours) return null
   const h = Math.floor(hours)
@@ -7,12 +9,18 @@ function formatTime(hours) {
   return `${h}h${String(m).padStart(2, '0')}`
 }
 
-export function ActionCard({ action }) {
+export function ActionCard({ action, onAddPurchase }) {
   const cat = action.subcategory?.category
   const sub = action.subcategory
   const inter = action.intervention
   const catColor = cat?.color ?? '#64748b'
   const time = formatTime(action.time_spent)
+  const purchases = action.purchase_requests ?? []
+  const daCount = purchases.length
+
+  // Badge color: unique color if all same, amber if mixed
+  const colors = [...new Set(purchases.map(p => p.derived_status?.color).filter(Boolean))]
+  const badgeColor = daCount === 0 ? null : colors.length === 1 ? colors[0] : '#F59E0B'
 
   return (
     <div
@@ -47,18 +55,34 @@ export function ActionCard({ action }) {
           </p>
         )}
 
-        {/* Footer : complexité + temps */}
+        {/* Footer : complexité + temps + DA */}
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-[10px] text-tunnel-muted">
             {action.action_start && action.action_end
               ? `${action.action_start.slice(0, 5)} – ${action.action_end.slice(0, 5)}`
               : '—'}
           </span>
-          {time && (
-            <span className="text-[11px] font-semibold" style={{ color: catColor }}>
-              {time}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {time && (
+              <span className="text-[11px] font-semibold" style={{ color: catColor }}>
+                {time}
+              </span>
+            )}
+            <button
+              onClick={e => { e.stopPropagation(); onAddPurchase?.(action.id) }}
+              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70"
+              style={daCount > 0
+                ? { backgroundColor: badgeColor + '22', color: badgeColor }
+                : { color: '#94a3b8' }
+              }
+            >
+              <ShoppingCart size={10} />
+              {daCount > 0
+                ? <span className="text-[10px] font-semibold">{daCount}</span>
+                : <Plus size={8} strokeWidth={2.5} />
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>

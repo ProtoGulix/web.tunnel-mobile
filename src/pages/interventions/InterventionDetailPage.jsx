@@ -1,12 +1,68 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Plus, Loader2, Check } from 'lucide-react'
+import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
 import { ActionCard } from '../../components/interventions/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
+
+function getInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function formatDateFr(dateStr) {
+  if (!dateStr) return ''
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr))
+}
+
+function DICard({ request }) {
+  if (!request) {
+    return (
+      <div className="bg-white border border-tunnel-border rounded-lg p-4 flex items-start gap-3">
+        <Unlink size={16} className="text-tunnel-muted shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-tunnel-text">Aucune demande liée</p>
+          <p className="text-xs text-tunnel-muted mt-0.5">Intervention créée manuellement, sans demande associée.</p>
+        </div>
+      </div>
+    )
+  }
+  const borderColor = request.statut_color ?? '#e2e8f0'
+  return (
+    <div
+      className="bg-white border border-tunnel-border rounded-lg px-3 py-2.5 flex flex-col gap-1"
+      style={{ borderLeftWidth: 3, borderLeftColor: borderColor }}
+    >
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="font-mono text-xs font-semibold bg-tunnel-bg border border-tunnel-border text-tunnel-text px-1.5 py-0.5 rounded">
+          {request.code}
+        </span>
+        <span
+          className="text-xs px-1.5 py-0.5 rounded font-medium"
+          style={{ backgroundColor: (request.statut_color ?? '#6b7280') + '22', color: request.statut_color ?? '#6b7280' }}
+        >
+          {request.statut_label}
+        </span>
+        <span className="text-xs font-semibold text-tunnel-text bg-tunnel-bg border border-tunnel-border px-1.5 py-0.5 rounded">
+          {getInitials(request.demandeur_nom)}
+        </span>
+        <span className="text-xs text-tunnel-muted">—</span>
+        {request.demandeur_service && (
+          <span className="text-xs text-tunnel-muted">{request.demandeur_service}</span>
+        )}
+        {request.description && (
+          <span className="text-xs text-tunnel-text truncate flex-1 min-w-0">{request.description}</span>
+        )}
+      </div>
+      {request.created_at && (
+        <p className="text-xs text-tunnel-muted text-right">{formatDateFr(request.created_at)}</p>
+      )}
+    </div>
+  )
+}
 
 function StatusSheet({ currentCode, statuses, onClose, onChange }) {
   const targets = statuses.filter(s => s.id !== currentCode && (s.label || s.value))
@@ -124,10 +180,13 @@ export default function InterventionDetailPage() {
               <span className="font-mono text-sm font-semibold text-tunnel-text truncate">
                 {loading ? '…' : (intervention?.code ?? id)}
               </span>
-              {statusColor && (
+              {statusLabel && (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0"
-                  style={{ backgroundColor: statusColor + '22', color: statusColor }}
+                  style={statusColor
+                    ? { backgroundColor: statusColor + '22', color: statusColor }
+                    : { backgroundColor: '#6b728022', color: '#6b7280' }
+                  }
                 >
                   {statusLabel}
                 </span>
@@ -188,6 +247,12 @@ export default function InterventionDetailPage() {
                 <p className="text-sm text-tunnel-text">{intervention.description ?? intervention.title}</p>
               </div>
             )}
+
+            {/* Demande d'intervention liée */}
+            <div className="mx-4 mt-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-tunnel-muted mb-2">Demande liée</p>
+              <DICard request={intervention.request ?? null} />
+            </div>
 
             {/* Actions */}
             <div className="px-4 mt-4 mb-2">
