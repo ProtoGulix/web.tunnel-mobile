@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.miladz.eu}
     container_name: tunnel-mobile-web
     restart: unless-stopped
     ports:

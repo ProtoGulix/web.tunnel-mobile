@@ -11,6 +11,10 @@ RUN npm ci
 # Copie du reste du code source
 COPY . .
 
+# Variable injectée par Vite au moment du build
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 # Build de production (génère /app/dist)
 RUN npm run build
 
