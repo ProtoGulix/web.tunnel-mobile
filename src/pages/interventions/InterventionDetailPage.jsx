@@ -1,39 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Plus, Loader2, Check } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
-import { changeInterventionStatus } from '../../api/interventions'
+import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
 import { ActionCard } from '../../components/interventions/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 
-const STATUS_COLORS = {
-  ouvert: '#22c55e',
-  en_cours: '#3b82f6',
-  en_attente: '#f59e0b',
-  resolu: '#6b7280',
-  cloture: '#1f2937',
-  bloque: '#ef4444',
-}
-const STATUS_LABELS = {
-  ouvert: 'Ouvert',
-  en_cours: 'En cours',
-  en_attente: 'En attente',
-  resolu: 'Résolu',
-  cloture: 'Clôturé',
-  bloque: 'Bloqué',
-}
-const STATUS_TRANSITIONS = {
-  ouvert:     [{ code: 'en_cours',    label: 'Prendre en charge' }],
-  en_cours:   [{ code: 'en_attente', label: 'Mettre en attente' }, { code: 'resolu', label: 'Marquer résolu' }],
-  en_attente: [{ code: 'en_cours',    label: 'Reprendre' }],
-  resolu:     [{ code: 'cloture',    label: 'Clôturer' }],
-  bloque:     [{ code: 'en_cours',    label: 'Reprendre' }],
-}
-
-function StatusSheet({ statusCode, onClose, onChange }) {
-  const transitions = STATUS_TRANSITIONS[statusCode] ?? []
+function StatusSheet({ currentCode, statuses, onClose, onChange }) {
+  const targets = statuses.filter(s => s.id !== currentCode && (s.label || s.value))
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(null)
 
@@ -67,26 +43,30 @@ function StatusSheet({ statusCode, onClose, onChange }) {
           {err && (
             <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>
           )}
-          {transitions.length === 0 ? (
-            <p className="text-sm text-tunnel-muted py-4 text-center">Aucune transition disponible</p>
+          {targets.length === 0 ? (
+            <p className="text-sm text-tunnel-muted py-4 text-center">Aucun statut disponible</p>
           ) : (
             <div className="space-y-2 mb-4">
-              {transitions.map(t => (
-                <button
-                  key={t.code}
-                  disabled={loading}
-                  onClick={() => handleChange(t.code)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-tunnel-border bg-white active:bg-tunnel-bg text-sm font-medium text-tunnel-text disabled:opacity-50"
-                >
-                  <span>{t.label}</span>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded font-medium"
-                    style={{ backgroundColor: (STATUS_COLORS[t.code] ?? '#6b7280') + '22', color: STATUS_COLORS[t.code] ?? '#6b7280' }}
+              {targets.map(s => {
+                const displayLabel = s.label || s.value
+                const color = s.color ?? '#6b7280'
+                return (
+                  <button
+                    key={s.id}
+                    disabled={loading}
+                    onClick={() => handleChange(s.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-tunnel-border bg-white active:bg-tunnel-bg text-sm font-medium text-tunnel-text disabled:opacity-50"
                   >
-                    {STATUS_LABELS[t.code] ?? t.code}
-                  </span>
-                </button>
-              ))}
+                    <span>{displayLabel}</span>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded font-medium"
+                      style={{ backgroundColor: color + '22', color }}
+                    >
+                      {displayLabel}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
           <button onClick={onClose} className="w-full py-3 text-sm text-tunnel-muted font-medium mb-2">
@@ -103,13 +83,19 @@ export default function InterventionDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { intervention, loading, error, reload } = useInterventionDetail(id)
+  const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
   const [showActionForm, setShowActionForm] = useState(false)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
 
+  useEffect(() => {
+    getInterventionStatuses().then(setStatuses).catch(() => {})
+  }, [])
+
   const statusCode = intervention?.status_actual ?? intervention?.statut ?? ''
-  const statusColor = STATUS_COLORS[statusCode]
-  const statusLabel = STATUS_LABELS[statusCode] ?? statusCode
+  const currentStatus = statuses.find(s => s.id === statusCode)
+  const statusColor = currentStatus?.color
+  const statusLabel = currentStatus?.label ?? currentStatus?.value ?? statusCode
   const eq = intervention?.equipements ?? intervention?.machine
   const actions = intervention?.actions ?? []
   const stats = intervention?.stats
@@ -118,7 +104,7 @@ export default function InterventionDetailPage() {
     await changeInterventionStatus({
       intervention_id: id,
       status_from: statusCode,
-      status_to: toCode,
+      status_to: toCode,  // toCode is now s.id (the backend identifier)
       technician_id: user?.id,
       date: new Date().toISOString(),
     })
@@ -154,7 +140,7 @@ export default function InterventionDetailPage() {
               </p>
             )}
           </div>
-          {statusCode && STATUS_TRANSITIONS[statusCode]?.length > 0 && (
+          {statusCode && statuses.length > 0 && (
             <button
               onClick={() => setShowStatusSheet(true)}
               className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-tunnel-bg border border-tunnel-border text-tunnel-text mr-2"
@@ -244,7 +230,8 @@ export default function InterventionDetailPage() {
 
       {showStatusSheet && (
         <StatusSheet
-          statusCode={statusCode}
+          currentCode={statusCode}
+          statuses={statuses}
           onClose={() => setShowStatusSheet(false)}
           onChange={handleStatusChange}
         />
