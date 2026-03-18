@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.1.0] — 18 mars 2026
+
+Amélioration du détail des interventions, statuts dynamiques et intégration des demandes d'achat dans le planning.
+
+---
+
+### Planning
+
+- Bouton **+ DA** sur chaque action du planning avec badge coloré indiquant le nombre de demandes d'achat et leur état d'avancement
+- Ouverture du formulaire de création de DA directement depuis le planning
+
+---
+
+### Interventions
+
+- **Statuts dynamiques** : les statuts disponibles et leurs couleurs sont désormais chargés depuis le serveur (plus de valeurs codées en dur)
+- Correction de l'affichage du statut actuel dans l'en-tête (visible même sans couleur définie)
+- Section **Demande liée** dans le détail d'une intervention :
+  - Affiche la DI d'origine avec code, statut coloré, demandeur, service et description
+  - Empty state explicite si l'intervention a été créée manuellement (sans DI associée)
+
+---
+
 ## [1.0.0] — 18 mars 2026
 
 Première version de l'application mobile Tunnel. Cette version couvre les besoins du terrain : suivi des interventions, saisie des actions et gestion des demandes d'achat.
