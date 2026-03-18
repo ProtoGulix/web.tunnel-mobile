@@ -11,10 +11,6 @@ RUN npm ci
 # Copie du reste du code source
 COPY . .
 
-# Variable injectée par Vite au moment du build
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
 # Build de production (génère /app/dist)
 RUN npm run build
 
@@ -30,6 +26,10 @@ COPY nginx.conf /etc/nginx/conf.d/app.conf
 # Copie les fichiers buildés
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Entrypoint qui génère env-config.js au démarrage depuis API_URL
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint.sh"]
