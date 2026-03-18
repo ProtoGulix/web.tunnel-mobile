@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Plus, Loader2, Check, ShoppingCart } from 'lucide-react'
+import { ChevronLeft, Plus, Loader2, Check } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus } from '../../api/interventions'
 import { ActionCard } from '../../components/interventions/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
+import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 
 const STATUS_COLORS = {
   ouvert: '#22c55e',
@@ -104,6 +105,7 @@ export default function InterventionDetailPage() {
   const { intervention, loading, error, reload } = useInterventionDetail(id)
   const [showStatusSheet, setShowStatusSheet] = useState(false)
   const [showActionForm, setShowActionForm] = useState(false)
+  const [purchaseActionId, setPurchaseActionId] = useState(null)
 
   const statusCode = intervention?.status_actual ?? intervention?.statut ?? ''
   const statusColor = STATUS_COLORS[statusCode]
@@ -217,7 +219,7 @@ export default function InterventionDetailPage() {
                     <ActionCard
                       key={action.id}
                       action={action}
-                      onAddPurchase={() => navigate(`/interventions/${id}/add-purchase`, { state: { actionId: action.id } })}
+                      onAddPurchase={() => setPurchaseActionId(action.id)}
                     />
                   ))}
                 </div>
@@ -229,17 +231,10 @@ export default function InterventionDetailPage() {
 
       {/* FAB bottom bar */}
       {!loading && intervention && (
-        <div className="shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white safe-bottom">
-          <button
-            onClick={() => navigate(`/interventions/${id}/add-purchase`)}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-tunnel-border bg-white text-sm font-medium text-tunnel-muted active:bg-tunnel-bg"
-          >
-            <ShoppingCart size={15} />
-            DA
-          </button>
+        <div className="shrink-0 px-4 py-3 border-t border-tunnel-border bg-white safe-bottom">
           <button
             onClick={() => setShowActionForm(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold active:opacity-90"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold active:opacity-90"
           >
             <Plus size={16} />
             Ajouter une action
@@ -261,6 +256,14 @@ export default function InterventionDetailPage() {
           onDone={reload}
           defaultEquip={eq}
           defaultIntervention={intervention}
+        />
+      )}
+
+      {purchaseActionId != null && (
+        <PurchaseRequestForm
+          actionId={purchaseActionId}
+          onClose={() => setPurchaseActionId(null)}
+          onDone={reload}
         />
       )}
     </div>

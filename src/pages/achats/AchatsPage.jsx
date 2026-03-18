@@ -1,37 +1,13 @@
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { DAList } from '../../components/achats/DAList'
-import { DAForm } from '../../components/achats/DAForm'
+import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 import { usePurchaseRequests } from '../../hooks/achats/usePurchaseRequests'
 
 export default function AchatsPage() {
   const [showForm, setShowForm] = useState(false)
-  const { items, loading, error, create, createStatus } = usePurchaseRequests()
-
-  async function handleCreate(data) {
-    await create(data)
-    setShowForm(false)
-  }
-
-  if (showForm) return (
-    <div>
-      <PageHeader
-        title="Nouvelle DA"
-        action={
-          <button onClick={() => setShowForm(false)} className="p-1.5 text-tunnel-muted">
-            <X size={20} />
-          </button>
-        }
-      />
-      <DAForm
-        onSubmit={handleCreate}
-        onCancel={() => setShowForm(false)}
-        status={createStatus.status}
-        error={createStatus.error}
-      />
-    </div>
-  )
+  const { items, loading, error, reload } = usePurchaseRequests()
 
   return (
     <div>
@@ -48,6 +24,13 @@ export default function AchatsPage() {
         }
       />
       <DAList items={items} loading={loading} error={error} />
+
+      {showForm && (
+        <PurchaseRequestForm
+          onClose={() => setShowForm(false)}
+          onDone={reload}
+        />
+      )}
     </div>
   )
 }
