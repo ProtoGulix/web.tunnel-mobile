@@ -1,39 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Plus, Loader2, Check } from 'lucide-react'
+import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
-import { changeInterventionStatus } from '../../api/interventions'
+import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
 import { ActionCard } from '../../components/interventions/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 
-const STATUS_COLORS = {
-  ouvert: '#22c55e',
-  en_cours: '#3b82f6',
-  en_attente: '#f59e0b',
-  resolu: '#6b7280',
-  cloture: '#1f2937',
-  bloque: '#ef4444',
-}
-const STATUS_LABELS = {
-  ouvert: 'Ouvert',
-  en_cours: 'En cours',
-  en_attente: 'En attente',
-  resolu: 'Résolu',
-  cloture: 'Clôturé',
-  bloque: 'Bloqué',
-}
-const STATUS_TRANSITIONS = {
-  ouvert:     [{ code: 'en_cours',    label: 'Prendre en charge' }],
-  en_cours:   [{ code: 'en_attente', label: 'Mettre en attente' }, { code: 'resolu', label: 'Marquer résolu' }],
-  en_attente: [{ code: 'en_cours',    label: 'Reprendre' }],
-  resolu:     [{ code: 'cloture',    label: 'Clôturer' }],
-  bloque:     [{ code: 'en_cours',    label: 'Reprendre' }],
+function getInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function StatusSheet({ statusCode, onClose, onChange }) {
-  const transitions = STATUS_TRANSITIONS[statusCode] ?? []
+function formatDateFr(dateStr) {
+  if (!dateStr) return ''
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr))
+}
+
+function DICard({ request }) {
+  if (!request) {
+    return (
+      <div className="bg-white border border-tunnel-border rounded-lg p-4 flex items-start gap-3">
+        <Unlink size={16} className="text-tunnel-muted shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-tunnel-text">Aucune demande liée</p>
+          <p className="text-xs text-tunnel-muted mt-0.5">Intervention créée manuellement, sans demande associée.</p>
+        </div>
+      </div>
+    )
+  }
+  const borderColor = request.statut_color ?? '#e2e8f0'
+  return (
+    <div
+      className="bg-white border border-tunnel-border rounded-lg px-3 py-2.5 flex flex-col gap-1"
+      style={{ borderLeftWidth: 3, borderLeftColor: borderColor }}
+    >
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="font-mono text-xs font-semibold bg-tunnel-bg border border-tunnel-border text-tunnel-text px-1.5 py-0.5 rounded">
+          {request.code}
+        </span>
+        <span
+          className="text-xs px-1.5 py-0.5 rounded font-medium"
+          style={{ backgroundColor: (request.statut_color ?? '#6b7280') + '22', color: request.statut_color ?? '#6b7280' }}
+        >
+          {request.statut_label}
+        </span>
+        <span className="text-xs font-semibold text-tunnel-text bg-tunnel-bg border border-tunnel-border px-1.5 py-0.5 rounded">
+          {getInitials(request.demandeur_nom)}
+        </span>
+        <span className="text-xs text-tunnel-muted">—</span>
+        {request.demandeur_service && (
+          <span className="text-xs text-tunnel-muted">{request.demandeur_service}</span>
+        )}
+        {request.description && (
+          <span className="text-xs text-tunnel-text truncate flex-1 min-w-0">{request.description}</span>
+        )}
+      </div>
+      {request.created_at && (
+        <p className="text-xs text-tunnel-muted text-right">{formatDateFr(request.created_at)}</p>
+      )}
+    </div>
+  )
+}
+
+function StatusSheet({ currentCode, statuses, onClose, onChange }) {
+  const targets = statuses.filter(s => s.id !== currentCode && (s.label || s.value))
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(null)
 
@@ -67,26 +99,30 @@ function StatusSheet({ statusCode, onClose, onChange }) {
           {err && (
             <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{err}</div>
           )}
-          {transitions.length === 0 ? (
-            <p className="text-sm text-tunnel-muted py-4 text-center">Aucune transition disponible</p>
+          {targets.length === 0 ? (
+            <p className="text-sm text-tunnel-muted py-4 text-center">Aucun statut disponible</p>
           ) : (
             <div className="space-y-2 mb-4">
-              {transitions.map(t => (
-                <button
-                  key={t.code}
-                  disabled={loading}
-                  onClick={() => handleChange(t.code)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-tunnel-border bg-white active:bg-tunnel-bg text-sm font-medium text-tunnel-text disabled:opacity-50"
-                >
-                  <span>{t.label}</span>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded font-medium"
-                    style={{ backgroundColor: (STATUS_COLORS[t.code] ?? '#6b7280') + '22', color: STATUS_COLORS[t.code] ?? '#6b7280' }}
+              {targets.map(s => {
+                const displayLabel = s.label || s.value
+                const color = s.color ?? '#6b7280'
+                return (
+                  <button
+                    key={s.id}
+                    disabled={loading}
+                    onClick={() => handleChange(s.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-tunnel-border bg-white active:bg-tunnel-bg text-sm font-medium text-tunnel-text disabled:opacity-50"
                   >
-                    {STATUS_LABELS[t.code] ?? t.code}
-                  </span>
-                </button>
-              ))}
+                    <span>{displayLabel}</span>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded font-medium"
+                      style={{ backgroundColor: color + '22', color }}
+                    >
+                      {displayLabel}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
           <button onClick={onClose} className="w-full py-3 text-sm text-tunnel-muted font-medium mb-2">
@@ -103,13 +139,19 @@ export default function InterventionDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { intervention, loading, error, reload } = useInterventionDetail(id)
+  const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
   const [showActionForm, setShowActionForm] = useState(false)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
 
+  useEffect(() => {
+    getInterventionStatuses().then(setStatuses).catch(() => {})
+  }, [])
+
   const statusCode = intervention?.status_actual ?? intervention?.statut ?? ''
-  const statusColor = STATUS_COLORS[statusCode]
-  const statusLabel = STATUS_LABELS[statusCode] ?? statusCode
+  const currentStatus = statuses.find(s => s.id === statusCode)
+  const statusColor = currentStatus?.color
+  const statusLabel = currentStatus?.label ?? currentStatus?.value ?? statusCode
   const eq = intervention?.equipements ?? intervention?.machine
   const actions = intervention?.actions ?? []
   const stats = intervention?.stats
@@ -118,7 +160,7 @@ export default function InterventionDetailPage() {
     await changeInterventionStatus({
       intervention_id: id,
       status_from: statusCode,
-      status_to: toCode,
+      status_to: toCode,  // toCode is now s.id (the backend identifier)
       technician_id: user?.id,
       date: new Date().toISOString(),
     })
@@ -138,10 +180,13 @@ export default function InterventionDetailPage() {
               <span className="font-mono text-sm font-semibold text-tunnel-text truncate">
                 {loading ? '…' : (intervention?.code ?? id)}
               </span>
-              {statusColor && (
+              {statusLabel && (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shrink-0"
-                  style={{ backgroundColor: statusColor + '22', color: statusColor }}
+                  style={statusColor
+                    ? { backgroundColor: statusColor + '22', color: statusColor }
+                    : { backgroundColor: '#6b728022', color: '#6b7280' }
+                  }
                 >
                   {statusLabel}
                 </span>
@@ -154,7 +199,7 @@ export default function InterventionDetailPage() {
               </p>
             )}
           </div>
-          {statusCode && STATUS_TRANSITIONS[statusCode]?.length > 0 && (
+          {statusCode && statuses.length > 0 && (
             <button
               onClick={() => setShowStatusSheet(true)}
               className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-tunnel-bg border border-tunnel-border text-tunnel-text mr-2"
@@ -203,6 +248,12 @@ export default function InterventionDetailPage() {
               </div>
             )}
 
+            {/* Demande d'intervention liée */}
+            <div className="mx-4 mt-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-tunnel-muted mb-2">Demande liée</p>
+              <DICard request={intervention.request ?? null} />
+            </div>
+
             {/* Actions */}
             <div className="px-4 mt-4 mb-2">
               <div className="flex items-center justify-between mb-2">
@@ -244,7 +295,8 @@ export default function InterventionDetailPage() {
 
       {showStatusSheet && (
         <StatusSheet
-          statusCode={statusCode}
+          currentCode={statusCode}
+          statuses={statuses}
           onClose={() => setShowStatusSheet(false)}
           onChange={handleStatusChange}
         />

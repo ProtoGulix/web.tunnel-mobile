@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Loader2, Clock } from 'lucide-react'
 import { usePlanningWeek } from '../../hooks/planning/usePlanningWeek'
 import { ActionCard } from './ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
+import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 
 const DAY_NAMES = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
 const MONTH_SHORT = ['jan.', 'fév.', 'mar.', 'avr.', 'mai', 'jun.', 'jul.', 'aoû.', 'sep.', 'oct.', 'nov.', 'déc.']
@@ -44,6 +45,7 @@ const COL_WIDTH = 172
 export default function PlanningPage() {
   const { weekStart, days, loading, error, prevWeek, nextWeek, goToToday, reload } = usePlanningWeek()
   const [addingDay, setAddingDay] = useState(null)
+  const [purchaseActionId, setPurchaseActionId] = useState(null)
 
   return (
     <div className="flex flex-col h-full bg-tunnel-bg">
@@ -131,7 +133,11 @@ export default function PlanningPage() {
                       <p className="text-center text-[10px] text-tunnel-muted/50 pt-4">Aucune action</p>
                     ) : (
                       day.actions.map((action, ai) => (
-                        <ActionCard key={action.id ?? ai} action={action} />
+                        <ActionCard
+                          key={action.id ?? ai}
+                          action={action}
+                          onAddPurchase={setPurchaseActionId}
+                        />
                       ))
                     )}
                   </div>
@@ -147,6 +153,14 @@ export default function PlanningPage() {
           actionDate={addingDay}
           onClose={() => setAddingDay(null)}
           onDone={() => { reload(); setAddingDay(null) }}
+        />
+      )}
+
+      {purchaseActionId != null && (
+        <PurchaseRequestForm
+          actionId={purchaseActionId}
+          onClose={() => setPurchaseActionId(null)}
+          onDone={() => { setPurchaseActionId(null); reload() }}
         />
       )}
     </div>
