@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.1.1] — 18 mars 2026
+
+Mise à jour des dépendances de build et ajout de la configuration Docker pour le déploiement en production.
+
+---
+
+### Infrastructure
+
+- Ajout du `Dockerfile` multi-stage (build Node 20 → serve Nginx 1.27)
+- Ajout du `docker-compose.yml` mono-service, port lié à `127.0.0.1` (derrière tunnel Cloudflare)
+- Configuration Nginx pour SPA React : fallback `index.html`, compression gzip, cache long sur les assets Vite
+- Ajout du `.dockerignore`
+
+### Dépendances
+
+- `vite` mis à jour vers la dernière version stable
+- `vite-plugin-pwa` mis à jour vers la dernière version stable
+
+---
+
 ## [1.1.0] — 18 mars 2026
 
 Amélioration du détail des interventions, statuts dynamiques et intégration des demandes d'achat dans le planning.
