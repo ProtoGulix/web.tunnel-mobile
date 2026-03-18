@@ -5,16 +5,10 @@ import { DIList } from '../../components/interventions/DIList'
 import { DIForm } from '../../components/interventions/DIForm'
 import { useInterventionRequests } from '../../hooks/interventions/useInterventionRequests'
 
-const FILTERS = [
-  { value: 'nouvelle', label: 'Nouvelles' },
-  { value: 'en_attente', label: 'En attente' },
-  { value: 'acceptee', label: 'Acceptées' },
-]
-
 export default function InterventionsPage() {
   const [activeFilter, setActiveFilter] = useState('nouvelle')
   const [showForm, setShowForm] = useState(false)
-  const { items, loading, error, create, createStatus } = useInterventionRequests({ statut: activeFilter })
+  const { items, facets, loading, error, create, createStatus } = useInterventionRequests({ statut: activeFilter })
 
   async function handleCreate(data) {
     await create(data)
@@ -54,18 +48,24 @@ export default function InterventionsPage() {
           </button>
         }
       />
-      <div className="flex gap-1 px-4 py-3 bg-white border-b border-tunnel-border">
-        {FILTERS.map(f => (
+      <div className="flex gap-1 px-4 py-3 bg-white border-b border-tunnel-border overflow-x-auto">
+        {facets.map(f => (
           <button
-            key={f.value}
-            onClick={() => setActiveFilter(f.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              activeFilter === f.value
-                ? 'bg-tunnel-accent text-white'
+            key={f.code}
+            onClick={() => setActiveFilter(f.code)}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              activeFilter === f.code
+                ? 'text-white'
                 : 'text-tunnel-muted bg-tunnel-bg'
             }`}
+            style={activeFilter === f.code ? { backgroundColor: f.color } : {}}
           >
             {f.label}
+            {f.count > 0 && (
+              <span className={`text-[10px] ${activeFilter === f.code ? 'opacity-80' : 'text-tunnel-muted'}`}>
+                {f.count}
+              </span>
+            )}
           </button>
         ))}
       </div>

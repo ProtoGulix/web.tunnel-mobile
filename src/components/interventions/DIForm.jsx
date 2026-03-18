@@ -1,52 +1,26 @@
-import { useState, useEffect, useRef } from 'react'
-import { getEquipements } from '../../api/interventions'
+import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { getEquipements } from '../../api/interventions'
+import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
+
+const inputClass = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
+const labelClass = 'block text-[11px] font-medium uppercase tracking-wide text-tunnel-muted mb-1.5'
 
 export function DIForm({ onSubmit, onCancel, status, error }) {
-  const [form, setForm] = useState({
-    demandeur_nom: '',
-    machine_id: '',
-    equipment_label: '',
-    description: '',
-  })
-  const [equipSearch, setEquipSearch] = useState('')
-  const [equipSuggestions, setEquipSuggestions] = useState([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const searchTimeout = useRef(null)
-
-  useEffect(() => {
-    if (equipSearch.length < 2) { setEquipSuggestions([]); return }
-    clearTimeout(searchTimeout.current)
-    searchTimeout.current = setTimeout(() => {
-      setSearchLoading(true)
-      getEquipements(equipSearch)
-        .then(setEquipSuggestions)
-        .catch(() => setEquipSuggestions([]))
-        .finally(() => setSearchLoading(false))
-    }, 300)
-  }, [equipSearch])
-
-  function set(field, value) {
-    setForm(prev => ({ ...prev, [field]: value }))
-  }
+  const [form, setForm] = useState({ demandeur_nom: '', machine_id: '', description: '' })
+  const [selectedEquip, setSelectedEquip] = useState(null)
 
   function handleEquipSelect(equip) {
-    setForm(prev => ({ ...prev, machine_id: equip.id, equipment_label: equip.name ?? equip.code }))
-    setEquipSearch(equip.name ?? equip.code)
-    setEquipSuggestions([])
+    setSelectedEquip(equip)
+    setForm(p => ({ ...p, machine_id: equip.id }))
   }
+
+  function set(field, value) { setForm(prev => ({ ...prev, [field]: value })) }
 
   function handleSubmit(e) {
     e.preventDefault()
-    onSubmit({
-      machine_id: form.machine_id || undefined,
-      demandeur_nom: form.demandeur_nom,
-      description: form.description,
-    })
+    onSubmit({ machine_id: form.machine_id || undefined, demandeur_nom: form.demandeur_nom, description: form.description })
   }
-
-  const inputClass = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
-  const labelClass = 'block text-[11px] font-medium uppercase tracking-wide text-tunnel-muted mb-1'
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -54,34 +28,36 @@ export function DIForm({ onSubmit, onCancel, status, error }) {
         <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="relative">
+      {/* Équipement */}
+      <div>
         <label className={labelClass}>Équipement</label>
-        <input
-          type="text"
-          className={inputClass}
-          placeholder="Rechercher un équipement..."
-          value={equipSearch}
-          onChange={e => setEquipSearch(e.target.value)}
-        />
-        {searchLoading && <Loader2 size={14} className="absolute right-3 top-8 animate-spin text-tunnel-muted" />}
-        {equipSuggestions.length > 0 && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-tunnel-border rounded-lg shadow-lg overflow-hidden">
-            {equipSuggestions.slice(0, 6).map(eq => (
-              <li key={eq.id}>
-                <button
-                  type="button"
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-tunnel-bg active:bg-tunnel-bg"
-                  onClick={() => handleEquipSelect(eq)}
-                >
-                  <span className="font-medium">{eq.name}</span>
-                  {eq.code && <span className="ml-2 font-mono text-xs text-tunnel-muted">{eq.code}</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
+        {selectedEquip ? (
+          <SelectionChip
+            badge={selectedEquip.code}
+            label={selectedEquip.name ?? selectedEquip.code}
+            onClear={() => { setSelectedEquip(null); setForm(p => ({ ...p, machine_id: '' })) }}
+          />
+        ) : (
+          <AsyncSearchSelect
+            fetchFn={getEquipements}
+            onSelect={handleEquipSelect}
+            renderItem={eq => (
+              <>
+                {eq.code && (
+                  <span className="font-mono text-xs bg-tunnel-bg px-1.5 py-0.5 rounded text-tunnel-muted shrink-0">
+                    {eq.code}
+                  </span>
+                )}
+                <span className="text-sm font-medium text-tunnel-text truncate">{eq.name}</span>
+              </>
+            )}
+            placeholder="Rechercher un équipement..."
+            minChars={1}
+          />
         )}
       </div>
 
+      {/* Demandeur */}
       <div>
         <label className={labelClass}>Votre nom *</label>
         <input
@@ -94,6 +70,7 @@ export function DIForm({ onSubmit, onCancel, status, error }) {
         />
       </div>
 
+      {/* Description */}
       <div>
         <label className={labelClass}>Description *</label>
         <textarea
