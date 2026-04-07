@@ -20,3 +20,8 @@ Thumbs.db
 # IDE
 .vscode
 .idea
+
+.cert
+
+package-lock.json
+settings.local.json

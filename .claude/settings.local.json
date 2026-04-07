@@ -9,7 +9,22 @@
       "Bash(taskkill /PID 199084 /F)",
       "Bash(taskkill /PID 89596 /F)",
       "Bash(cmd /c \"taskkill /PID 199084 /F && taskkill /PID 89596 /F\")",
-      "Bash(node --input-type=module:*)"
+      "Bash(node --input-type=module:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(mkdir -p .cert)",
+      "Bash(openssl req:*)",
+      "Bash(node -e \"const v = require\\(''vite/package.json''\\).version; console.log\\(''vite:'', v\\)\")",
+      "Bash(where openssl:*)",
+      "Bash(\"/c/Program Files/Git/usr/bin/openssl\" pkcs12 -in .cert/cert.pfx -nocerts -nodes -out .cert/key.pem -passin pass:tunnel)",
+      "Bash(\"/c/Program Files/Git/usr/bin/openssl\" pkcs12 -in .cert/cert.pfx -nokeys -out .cert/cert.pem -passin pass:tunnel)",
+      "Bash(node -e \"const v=require\\(''''fs''''\\).readFileSync\\(''''/dev/stdin'''',''''utf8''''\\); const arr=JSON.parse\\(v\\); console.log\\(arr.filter\\(x=>x.startsWith\\(''''6.''''\\)\\).slice\\(-10\\).join\\(''''\\\\n''''\\)\\)\")",
+      "Bash(npm show:*)",
+      "Bash(node -e \"console.log\\(require\\(''./node_modules/vite/package.json''\\).version\\)\")",
+      "Bash(\"/c/Program Files/Git/usr/bin/openssl\" x509 -in .cert/cert.pem -out .cert/cert-clean.pem)",
+      "Bash(\"/c/Program Files/Git/usr/bin/openssl\" pkey -in .cert/key.pem -out .cert/key-clean.pem)",
+      "Bash(node -e \":*)",
+      "Bash(taskkill /PID 99432 /F)",
+      "Bash(powershell -Command \"Stop-Process -Id 99432 -Force\")"
     ]
   }
 }
