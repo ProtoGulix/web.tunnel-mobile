@@ -66,7 +66,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-full bg-tunnel-bg">
       <header className="bg-white border-b border-tunnel-border px-4 pt-4 pb-3">
-        <h1 className="text-base font-semibold text-tunnel-text mb-3">Recherche</h1>
+        <h1 className="text-base font-semibold text-tunnel-text mb-3">Interventions</h1>
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-tunnel-muted" />
           <input

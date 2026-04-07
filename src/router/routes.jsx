@@ -9,6 +9,7 @@ import InterventionDetailPage from '../pages/interventions/InterventionDetailPag
 import AddActionPage from '../pages/interventions/AddActionPage'
 import AddPurchasePage from '../pages/interventions/AddPurchasePage'
 import AchatsPage from '../pages/achats/AchatsPage'
+import QrCodePage from '../pages/qrcode/QrCodePage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -25,14 +26,18 @@ export default function AppRoutes() {
           <AppShell />
         </PrivateRoute>
       }>
-        <Route index element={<Navigate to="/home" replace />} />
-        <Route path="home" element={<HomePage />} />
-        <Route path="planning" element={<PlanningPage />} />
-        <Route path="interventions" element={<InterventionsPage />} />
+        <Route index element={<Navigate to="/interventions" replace />} />
+        <Route path="interventions" element={<HomePage />} />
         <Route path="interventions/:id" element={<InterventionDetailPage />} />
         <Route path="interventions/:id/add-action" element={<AddActionPage />} />
         <Route path="interventions/:id/add-purchase" element={<AddPurchasePage />} />
+        <Route path="planning" element={<PlanningPage />} />
+        <Route path="demande-intervention" element={<InterventionsPage />} />
+        <Route path="demande-intervention/:id" element={<InterventionDetailPage />} />
+        <Route path="demande-intervention/:id/add-action" element={<AddActionPage />} />
+        <Route path="demande-intervention/:id/add-purchase" element={<AddPurchasePage />} />
         <Route path="achats" element={<AchatsPage />} />
+        <Route path="qrcode" element={<QrCodePage />} />
       </Route>
     </Routes>
   )

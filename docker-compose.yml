@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    container_name: tunnel-mobile-web
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    environment:
+      - API_URL=${API_URL:-https://api.miladz.eu}
