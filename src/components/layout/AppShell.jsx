@@ -23,7 +23,7 @@ function ServerStatusBar() {
 
 export default function AppShell() {
   return (
-    <div className="flex flex-col h-full bg-tunnel-bg">
+    <div className="flex flex-col h-full bg-tunnel-bg safe-top">
       <ServerStatusBar />
       <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'var(--bottom-nav-height)' }}>
         <Outlet />
