@@ -5,7 +5,8 @@ function validate(formState) {
   if (!formState.description?.trim())
     errors.push("Description est obligatoire");
   const c = Number(formState.complexity);
-  if (c < 1 || c > 10) errors.push("Complexité doit être entre 1 et 10");
+  if (!formState.complexity || c < 1 || c > 10)
+    errors.push("Complexité doit être entre 1 et 10");
   if (c > 5 && formState.complexityFactors.length === 0)
     errors.push(
       "Au moins un facteur de complexité est requis pour complexité > 5",
@@ -19,7 +20,7 @@ export function useActionForm(initialState = {}) {
     date: initialState.date ?? new Date().toISOString().split("T")[0],
     category: initialState.category ?? "",
     description: initialState.description ?? "",
-    complexity: initialState.complexity ?? "5",
+    complexity: initialState.complexity ?? "",
     complexityFactors: initialState.complexityFactors ?? [],
   });
   const [validationErrors, setValidationErrors] = useState([]);
@@ -54,7 +55,7 @@ export function useActionForm(initialState = {}) {
       date: new Date().toISOString().split("T")[0],
       category: "",
       description: "",
-      complexity: "5",
+      complexity: "",
       complexityFactors: [],
     });
     setValidationErrors([]);

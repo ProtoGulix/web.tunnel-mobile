@@ -14,21 +14,41 @@
   }
 
   body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: #f8fafc;
-    color: #0f172a;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #F4F6F8;
+    color: #2E2E2E;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Inputs : min 16px pour éviter le zoom automatique sur iOS */
+  input, textarea, select {
+    font-size: 16px;
   }
 
   :root {
-    --tunnel-dark: #1a2332;
-    --tunnel-accent: #3b82f6;
-    --tunnel-bg: #f8fafc;
-    --tunnel-card: #ffffff;
-    --tunnel-border: #e2e8f0;
-    --tunnel-text: #0f172a;
-    --tunnel-muted: #64748b;
+    /* ── Couleurs de base ── */
+    --tunnel-primary:    #1F3A5F;
+    --tunnel-text:       #2E2E2E;
+    --tunnel-bg:         #F4F6F8;
+    --tunnel-surface:    #FFFFFF;
+    --tunnel-secondary:  #616161;
+    --tunnel-border:     #E0E0E0;
+    --tunnel-divider:    #BDBDBD;
+
+    /* ── Sémantiques ── */
+    --tunnel-success:    #2E7D32;
+    --tunnel-warning:    #ED6C02;
+    --tunnel-danger:     #C62828;
+
+    /* ── Sidebar ── */
+    --tunnel-sidebar-bg:     #2E2E2E;
+    --tunnel-sidebar-text:   #E5E9EF;
+    --tunnel-sidebar-muted:  #A0A8B5;
+    --tunnel-sidebar-active: #3B4F70;
+
+    /* ── Shell ── */
     --bottom-nav-height: 64px;
   }
 }
@@ -37,7 +57,14 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  /* Focus ring GMAO */
+  .focus-tunnel {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(31, 58, 95, 0.10);
   }
 }

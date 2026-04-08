@@ -1,21 +1,18 @@
-const variants = {
-  blue: 'bg-blue-100 text-blue-700',
-  indigo: 'bg-indigo-100 text-indigo-700',
-  violet: 'bg-violet-100 text-violet-700',
-  red: 'bg-red-100 text-red-700',
-  amber: 'bg-amber-100 text-amber-700',
-  green: 'bg-green-100 text-green-700',
-  slate: 'bg-slate-100 text-slate-600',
-}
+import { BADGE_VARIANTS } from '../../config/badges'
 
-export function Badge({ children, variant = 'slate', mono = false, className = '' }) {
+/**
+ * Badge TUNNEL GMAO
+ * variant: 'info' | 'success' | 'warning' | 'danger' | 'secondary'
+ */
+export function Badge({ children, variant = 'secondary', mono = false, className = '' }) {
+  const v = BADGE_VARIANTS[variant] ?? BADGE_VARIANTS.secondary
   return (
     <span className={`
-      inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-      ${variants[variant] ?? variants.slate}
+      inline-flex items-center px-2 py-0.5 rounded-badge border text-badge font-medium
+      ${v.bg} ${v.text} ${v.border}
       ${mono ? 'font-mono' : ''}
       ${className}
-    `}>
+    `.trim()}>
       {children}
     </span>
   )

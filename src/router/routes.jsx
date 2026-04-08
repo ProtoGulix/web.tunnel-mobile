@@ -3,12 +3,13 @@ import { useAuth } from '../auth/AuthContext'
 import AppShell from '../components/layout/AppShell'
 import LoginPage from '../pages/LoginPage'
 import HomePage from '../pages/home/HomePage'
-import PlanningPage from '../pages/planning/PlanningPage'
-import InterventionsPage from '../pages/interventions/InterventionsPage'
+import InterventionsPage from '../screens/InterventionsScreen'
 import InterventionDetailPage from '../pages/interventions/InterventionDetailPage'
 import AddActionPage from '../pages/interventions/AddActionPage'
 import AddPurchasePage from '../pages/interventions/AddPurchasePage'
+import InterventionRequestsPage from '../pages/intervention-requests/InterventionRequestsPage'
 import AchatsPage from '../pages/achats/AchatsPage'
+import StockPage from '../pages/stock/StockPage'
 import QrCodePage from '../pages/qrcode/QrCodePage'
 
 function PrivateRoute({ children }) {
@@ -26,17 +27,26 @@ export default function AppRoutes() {
           <AppShell />
         </PrivateRoute>
       }>
-        <Route index element={<Navigate to="/interventions" replace />} />
-        <Route path="interventions" element={<HomePage />} />
+        <Route index element={<HomePage />} />
+
+        {/* Interventions */}
+        <Route path="interventions" element={<InterventionsPage />} />
         <Route path="interventions/:id" element={<InterventionDetailPage />} />
         <Route path="interventions/:id/add-action" element={<AddActionPage />} />
         <Route path="interventions/:id/add-purchase" element={<AddPurchasePage />} />
-        <Route path="planning" element={<PlanningPage />} />
-        <Route path="demande-intervention" element={<InterventionsPage />} />
-        <Route path="demande-intervention/:id" element={<InterventionDetailPage />} />
-        <Route path="demande-intervention/:id/add-action" element={<AddActionPage />} />
-        <Route path="demande-intervention/:id/add-purchase" element={<AddPurchasePage />} />
+
+        {/* Demandes d'intervention */}
+        <Route path="intervention-requests" element={<InterventionRequestsPage />} />
+        {/* Compatibilité ancienne route */}
+        <Route path="demande-intervention" element={<Navigate to="/intervention-requests" replace />} />
+
+        {/* Stock */}
+        <Route path="stock" element={<StockPage />} />
+
+        {/* Achats */}
         <Route path="achats" element={<AchatsPage />} />
+
+        {/* QR Code */}
         <Route path="qrcode" element={<QrCodePage />} />
       </Route>
     </Routes>
