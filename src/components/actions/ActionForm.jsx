@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { X, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, FileText, Hammer, Lock } from 'lucide-react'
+import { X, ChevronLeft, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, FileText, Hammer, Lock } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { useActionForm } from '../../hooks/interventions/useActionForm'
@@ -325,12 +325,13 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
 }
 
 // ─── Formulaire principal ─────────────────────────────────────────────────────
-export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, defaultIntervention = null }) {
+export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, defaultIntervention = null, mode = 'modal' }) {
   const { user } = useAuth()
   const { formState, handlers, validation } = useActionForm({ date: actionDate })
 
-  // Équipement
-  const [equip, setEquip] = useState(defaultEquip)
+  // Équipement — déduit de defaultIntervention si fourni
+  const [equip, setEquip] = useState(defaultIntervention?.equipements ?? defaultEquip)
+  const equipLocked = !!defaultEquip || !!defaultIntervention
 
   // DI chargées pour l'équipement
   const [dis, setDis] = useState([])
@@ -465,8 +466,13 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
     }
   }
 
+  const containerCls = mode === 'page'
+    ? 'flex flex-col h-full bg-white'
+    : 'fixed inset-x-0 top-0 z-[55] flex flex-col bg-white'
+  const containerStyle = mode === 'modal' ? { bottom: 'var(--bottom-nav-height)' } : undefined
+
   if (done) return (
-    <div className="fixed inset-x-0 top-0 z-[55] flex flex-col items-center justify-center bg-white gap-3" style={{ bottom: 'var(--bottom-nav-height)' }}>
+    <div className={`${containerCls} items-center justify-center gap-3`} style={containerStyle}>
       <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
         <Check size={24} className="text-green-600" />
       </div>
@@ -477,7 +483,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   const hasErrors = validation.errors.length > 0
 
   return (
-    <div className="fixed inset-x-0 top-0 z-[55] flex flex-col bg-white" style={{ bottom: 'var(--bottom-nav-height)' }}>
+    <div className={containerCls} style={containerStyle}>
 
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-tunnel-border bg-blue-50 shrink-0">
@@ -491,7 +497,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
           )}
         </div>
         <button type="button" onClick={guardedClose} className="p-1.5 text-tunnel-muted">
-          <X size={20} />
+          {mode === 'page' ? <ChevronLeft size={20} /> : <X size={20} />}
         </button>
       </div>
 
@@ -518,8 +524,8 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
                 <SelectionChip
                   badge={equip.code}
                   label={equip.name ?? equip.code}
-                  locked={!!defaultEquip}
-                  onClear={defaultEquip ? undefined : () => { setEquip(null); setIntervention(null) }}
+                  locked={equipLocked}
+                  onClear={equipLocked ? undefined : () => { setEquip(null); setIntervention(null) }}
                 />
               ) : (
                 <AsyncSearchSelect
@@ -802,7 +808,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
       </form>
 
       {/* Footer */}
-      <div className="shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white">
+      <div className={`shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white${mode === 'page' ? ' safe-bottom' : ''}`}>
         <button type="button" onClick={guardedClose}
           className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
           Annuler
