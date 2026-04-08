@@ -4,7 +4,7 @@ import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
-import { ActionCard } from '../../components/interventions/ActionCard'
+import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 
@@ -270,6 +270,7 @@ export default function InterventionDetailPage() {
                     <ActionCard
                       key={action.id}
                       action={action}
+                      variant="detail"
                       onAddPurchase={() => setPurchaseActionId(action.id)}
                     />
                   ))}

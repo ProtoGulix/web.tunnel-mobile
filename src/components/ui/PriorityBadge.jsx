@@ -1,13 +1,12 @@
 import { Badge } from './Badge'
+import { PRIORITIES } from '../../config/badges'
 
-const PRIORITY_MAP = {
-  urgent: { label: 'Urgent', variant: 'violet' },
-  important: { label: 'Important', variant: 'red' },
-  normal: { label: 'Normal', variant: 'amber' },
-  faible: { label: 'Faible', variant: 'green' },
-}
-
+/**
+ * PriorityBadge — affiche la priorité d'une intervention
+ * Utilise le mapping PRIORITIES de badges.js
+ */
 export function PriorityBadge({ priority }) {
-  const config = PRIORITY_MAP[priority?.toLowerCase()] ?? PRIORITY_MAP.normal
+  const key = priority?.toLowerCase() ?? ''
+  const config = PRIORITIES[key] ?? PRIORITIES.normale
   return <Badge variant={config.variant}>{config.label}</Badge>
 }
