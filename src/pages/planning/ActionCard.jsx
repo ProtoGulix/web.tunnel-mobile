@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Plus, User } from 'lucide-react'
 
 const MONTH_SHORT = ['jan.','fév.','mar.','avr.','mai','jun.','jul.','aoû.','sep.','oct.','nov.','déc.']
@@ -21,6 +22,7 @@ function formatDateShort(dateStr) {
 // variant="planning" (default) : compact, juste le compteur DA
 // variant="detail" : affiche le tech + détail de chaque DA
 export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
+  const navigate = useNavigate()
   const cat = action.subcategory?.category
   const sub = action.subcategory
   const inter = action.intervention
@@ -42,8 +44,9 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
   const interCode = inter?.code ?? action.intervention_code ?? action.intervention_id
   const interTitle = inter?.title ?? action.intervention_title ?? null
   const dateShort = formatDateShort(action.action_date ?? action.created_at)
+  const interventionId = inter?.id ?? action.intervention_id
 
-  return (
+  const cardContent = (
     <div
       className="bg-white rounded-lg border border-tunnel-border overflow-hidden"
       style={{ borderLeft: `3px solid ${catColor}` }}
@@ -199,4 +202,13 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
       </div>
     </div>
   )
+
+  return variant === 'planning' && interventionId ? (
+    <button
+      className="w-full text-left active:opacity-75"
+      onClick={() => navigate(`/interventions/${interventionId}`)}
+    >
+      {cardContent}
+    </button>
+  ) : cardContent
 }

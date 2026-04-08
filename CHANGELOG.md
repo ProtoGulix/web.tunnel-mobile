@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.2.0] — 8 avril 2026
+
+Refonte du composant `ActionCard` avec navigation, unification du formulaire d'action en modal et page complète, et nettoyage des composants inutilisés.
+
+---
+
+### Planning
+
+- **ActionCard cliquable** : les cartes d'action dans le planning sont désormais des liens vers la page de détail de l'intervention
+- **Variante contextuelle** (`variant="planning"` / `variant="detail"`) : `ActionCard` adapte son contenu selon le contexte d'affichage
+  - Vue planning : affiche le code et le titre de l'intervention, résumé compact (horaires, temps, compteur DA)
+  - Vue détail : masque le code/titre (déjà dans l'en-tête), affiche une ligne méta (date · horaires · technicien · temps) et le détail de chaque DA
+- Correction de l'affichage du code et du titre de l'intervention dans le planning (support des champs plats de l'API)
+- Suppression du tiret `—` affiché à tort quand aucune plage horaire n'est définie
+
+### Interventions
+
+- **`ActionForm` unifié** : le formulaire de création d'action supporte désormais un prop `mode` (`'modal'` | `'page'`) :
+  - `modal` : superposition plein écran (comportement précédent)
+  - `page` : remplit toute la page, bouton retour `ChevronLeft`, padding bas sécurisé
+- En mode page, l'intervention par défaut (`defaultIntervention`) dérive automatiquement l'équipement et le verrouille
+- Suppression de la valeur par défaut de la complexité (champ vide au départ)
+- `AddActionPage` simplifié : wrapper léger autour de `ActionForm mode="page"`
+
+### Nettoyage
+
+- Suppression de `src/pages/planning/ActionForm.jsx` (re-export devenu inutile)
+- Suppression de `src/components/achats/DAForm.jsx` (composant non utilisé)
+
+---
+
 ## [1.1.1] — 18 mars 2026
 
 Mise à jour des dépendances de build et ajout de la configuration Docker pour le déploiement en production.
