@@ -1,11 +1,15 @@
 import { useState, useRef } from 'react'
-import { CalendarDays, List, Search, ChevronLeft, ChevronRight, Loader2, Clock, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { CalendarDays, List, Search, ChevronLeft, ChevronRight, Loader2, Clock, Plus, ChevronDown, ChevronUp, ClipboardList, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useInterventionsList, ageInDays } from '../hooks/interventions/useInterventionsList'
 import { usePlanningWeek } from '../hooks/planning/usePlanningWeek'
+import { useInterventionRequests } from '../hooks/interventions/useInterventionRequests'
 import { ActionCard } from '../pages/planning/ActionCard'
 import { ActionForm } from '../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../components/purchases/PurchaseRequestForm'
+import { DIList } from '../components/interventions/DIList'
+import { DIForm } from '../components/interventions/DIForm'
+import { PageHeader } from '../components/ui/PageHeader'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -387,9 +391,81 @@ function PlanningView() {
   )
 }
 
+// ── Vue Demandes ──────────────────────────────────────────────────────────────
+function DemandesView() {
+  const [activeFilter, setActiveFilter] = useState('nouvelle')
+  const [showForm, setShowForm] = useState(false)
+  const { items, facets, loading, error, create, createStatus } = useInterventionRequests({ statut: activeFilter })
+
+  async function handleCreate(data: any) {
+    await create(data)
+    setShowForm(false)
+  }
+
+  if (showForm) return (
+    <div className="flex flex-col h-full">
+      <PageHeader
+        title="Nouvelle DI"
+        action={
+          <button onClick={() => setShowForm(false)} className="p-1.5 text-[#616161]">
+            <X size={20} />
+          </button>
+        }
+      />
+      <DIForm
+        onSubmit={handleCreate}
+        onCancel={() => setShowForm(false)}
+        status={createStatus.status}
+        error={createStatus.error}
+      />
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 px-4 py-3 bg-white border-b border-[#E0E0E0] flex items-center justify-between">
+        <span className="text-xs font-medium text-[#616161]">Demandes d'intervention</span>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 bg-[#1F3A5F] text-white px-3 py-1.5 rounded text-xs font-medium active:opacity-80"
+        >
+          <Plus size={14} />
+          Nouvelle
+        </button>
+      </div>
+      {facets.length > 0 && (
+        <div className="flex gap-1 px-4 py-3 bg-white border-b border-[#E0E0E0] overflow-x-auto shrink-0">
+          {facets.map((f: any) => (
+            <button
+              key={f.code}
+              onClick={() => setActiveFilter(f.code)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors border ${
+                activeFilter === f.code
+                  ? 'text-white border-transparent'
+                  : 'text-[#616161] bg-[#F4F6F8] border-[#E0E0E0]'
+              }`}
+              style={activeFilter === f.code ? { backgroundColor: f.color, borderColor: f.color } : {}}
+            >
+              {f.label}
+              {f.count > 0 && (
+                <span className={`text-[10px] ${activeFilter === f.code ? 'opacity-80' : 'text-[#616161]'}`}>
+                  {f.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto">
+        <DIList items={items} loading={loading} error={error} />
+      </div>
+    </div>
+  )
+}
+
 // ── Écran principal ───────────────────────────────────────────────────────────
 export default function InterventionsScreen() {
-  const [tab, setTab] = useState<'planning' | 'liste'>('planning')
+  const [tab, setTab] = useState<'planning' | 'liste' | 'demandes'>('planning')
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
@@ -416,12 +492,23 @@ export default function InterventionsScreen() {
             }`}
           >
             <List size={13} />
-            Liste
+            Interventions
+          </button>
+          <button
+            onClick={() => setTab('demandes')}
+            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
+              tab === 'demandes'
+                ? 'border-[#1F3A5F] text-[#1F3A5F]'
+                : 'border-transparent text-[#616161]'
+            }`}
+          >
+            <ClipboardList size={13} />
+            Demandes
           </button>
         </div>
       </header>
 
-      {tab === 'planning' ? <PlanningView /> : <ListView />}
+      {tab === 'planning' ? <PlanningView /> : tab === 'liste' ? <ListView /> : <DemandesView />}
     </div>
   )
 }

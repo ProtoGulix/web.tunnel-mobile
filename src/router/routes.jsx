@@ -7,9 +7,8 @@ import InterventionsPage from '../screens/InterventionsScreen'
 import InterventionDetailPage from '../pages/interventions/InterventionDetailPage'
 import AddActionPage from '../pages/interventions/AddActionPage'
 import AddPurchasePage from '../pages/interventions/AddPurchasePage'
-import InterventionRequestsPage from '../pages/intervention-requests/InterventionRequestsPage'
-import AchatsPage from '../pages/achats/AchatsPage'
 import StockPage from '../pages/stock/StockPage'
+import EquipementsPage from '../pages/equipements/EquipementsPage'
 import QrCodePage from '../pages/qrcode/QrCodePage'
 
 function PrivateRoute({ children }) {
@@ -35,16 +34,17 @@ export default function AppRoutes() {
         <Route path="interventions/:id/add-action" element={<AddActionPage />} />
         <Route path="interventions/:id/add-purchase" element={<AddPurchasePage />} />
 
-        {/* Demandes d'intervention */}
-        <Route path="intervention-requests" element={<InterventionRequestsPage />} />
-        {/* Compatibilité ancienne route */}
-        <Route path="demande-intervention" element={<Navigate to="/intervention-requests" replace />} />
+        {/* Compatibilité anciennes routes */}
+        <Route path="intervention-requests" element={<Navigate to="/interventions" replace />} />
+        <Route path="demande-intervention" element={<Navigate to="/interventions" replace />} />
+        <Route path="achats" element={<Navigate to="/stock" replace />} />
 
-        {/* Stock */}
+        {/* Stock (inclut demandes d'achat) */}
         <Route path="stock" element={<StockPage />} />
 
-        {/* Achats */}
-        <Route path="achats" element={<AchatsPage />} />
+        {/* Équipements — UUID dans l'URL pour QR code */}
+        <Route path="equipements" element={<EquipementsPage />} />
+        <Route path="equipements/:uuid" element={<EquipementsPage />} />
 
         {/* QR Code */}
         <Route path="qrcode" element={<QrCodePage />} />

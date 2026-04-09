@@ -1,14 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import {
-  Home, Wrench, ClipboardList, Package, ShoppingCart,
-} from 'lucide-react'
+import { Home, Wrench, Package, Cpu, QrCode } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/',                      icon: Home,          label: 'Accueil' },
-  { to: '/interventions',          icon: Wrench,        label: 'Interventions' },
-  { to: '/intervention-requests',  icon: ClipboardList, label: 'Demandes' },
-  { to: '/stock',                  icon: Package,       label: 'Stock' },
-  { to: '/achats',                 icon: ShoppingCart,  label: 'Achats' },
+  { to: '/',             icon: Home,    label: 'Accueil' },
+  { to: '/interventions', icon: Wrench,  label: 'Intervention' },
+  { to: '/stock',        icon: Package, label: 'Stock' },
+  { to: '/equipements',  icon: Cpu,     label: 'Équipements' },
+  { to: '/qrcode',       icon: QrCode,  label: 'QR Code' },
 ]
 
 export function BottomNav() {

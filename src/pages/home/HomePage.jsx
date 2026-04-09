@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Wrench, ClipboardList, Package, ShoppingCart, QrCode } from 'lucide-react'
+import { Wrench, Package, Cpu, QrCode } from 'lucide-react'
 
 const SHORTCUTS = [
-  { label: 'Interventions',    route: '/interventions',          icon: Wrench,        color: '#1F3A5F' },
-  { label: 'Demandes',         route: '/intervention-requests',  icon: ClipboardList, color: '#1F3A5F' },
-  { label: 'Stock',            route: '/stock',                  icon: Package,       color: '#1F3A5F' },
-  { label: 'Achats',           route: '/achats',                 icon: ShoppingCart,  color: '#1F3A5F' },
-  { label: 'QR Code',          route: '/qrcode',                 icon: QrCode,        color: '#1F3A5F' },
+  { label: 'Interventions', route: '/interventions', icon: Wrench,   color: '#1F3A5F' },
+  { label: 'Stock',         route: '/stock',         icon: Package,  color: '#1F3A5F' },
+  { label: 'Équipements',   route: '/equipements',   icon: Cpu,      color: '#1F3A5F' },
+  { label: 'QR Code',       route: '/qrcode',        icon: QrCode,   color: '#1F3A5F' },
 ]
 
 export default function HomePage() {
