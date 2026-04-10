@@ -10,6 +10,7 @@ import { PurchaseRequestForm } from '../components/purchases/PurchaseRequestForm
 import { DIList } from '../components/interventions/DIList'
 import { DIForm } from '../components/interventions/DIForm'
 import { PageHeader } from '../components/ui/PageHeader'
+import { BottomBar, BottomBtn } from '../components/ui/BottomBar'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -441,17 +442,7 @@ function DemandesView() {
   )
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="shrink-0 px-4 py-3 bg-white border-b border-[#E0E0E0] flex items-center justify-between">
-        <span className="text-xs font-medium text-[#616161]">Demandes d'intervention</span>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 bg-[#1F3A5F] text-white px-3 py-1.5 rounded text-xs font-medium active:opacity-80"
-        >
-          <Plus size={14} />
-          Nouvelle
-        </button>
-      </div>
+    <div className="flex-1 flex flex-col min-h-0">
       {facets.length > 0 && (
         <div className="flex gap-1 px-4 py-3 bg-white border-b border-[#E0E0E0] overflow-x-auto shrink-0">
           {facets.map((f: any) => (
@@ -478,6 +469,11 @@ function DemandesView() {
       <div className="flex-1 overflow-y-auto">
         <DIList items={items} loading={loading} error={error} />
       </div>
+      <BottomBar>
+        <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+          Nouvelle demande
+        </BottomBtn>
+      </BottomBar>
     </div>
   )
 }
