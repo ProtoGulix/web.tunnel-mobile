@@ -41,7 +41,7 @@ function EquipementCard({ item, onSelect }) {
       <div className="w-1 shrink-0" style={{ backgroundColor: cfg.color }} />
 
       <div className="flex-1 min-w-0 px-3 py-2.5 space-y-1.5">
-        {/* Code + classe */}
+        {/* Code + classe + statut */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-mono text-[11px] font-medium px-1.5 py-0.5 rounded"
             style={{ backgroundColor: '#1F3A5F18', color: '#1F3A5F' }}>
@@ -51,6 +51,12 @@ function EquipementCard({ item, onSelect }) {
             <span className="text-[11px] px-1.5 py-0.5 rounded"
               style={{ backgroundColor: '#61616118', color: '#616161' }}>
               {item.equipement_class.label}
+            </span>
+          )}
+          {item.statut && (
+            <span className="text-[11px] px-1.5 py-0.5 rounded font-medium"
+              style={{ backgroundColor: (item.statut.couleur ?? '#616161') + '22', color: item.statut.couleur ?? '#616161' }}>
+              {item.statut.label}
             </span>
           )}
           <HealthBadge health={health} />
@@ -154,6 +160,28 @@ function EquipementDetail({ uuid, onBack }) {
         <InfoRow icon={Hash}     label="Code"         value={item.code} />
         <InfoRow icon={Cpu}      label="Nom"          value={item.name} />
         <InfoRow icon={Tag}      label="Classe"       value={item.equipement_class?.label} />
+        {item.statut && (
+          <div className="flex items-start gap-3 py-2.5 border-b border-[#F0F0F0]">
+            <Tag size={15} className="text-[#909090] mt-0.5 shrink-0" />
+            <span className="text-xs text-[#909090] w-28 shrink-0">Statut</span>
+            <span
+              className="text-[12px] font-medium px-2 py-0.5 rounded"
+              style={{ backgroundColor: (item.statut.couleur ?? '#616161') + '22', color: item.statut.couleur ?? '#616161' }}
+            >
+              {item.statut.label}
+            </span>
+          </div>
+        )}
+        {item.parent && (
+          <div className="flex items-start gap-3 py-2.5 border-b border-[#F0F0F0]">
+            <ChevronRight size={15} className="text-[#909090] mt-0.5 shrink-0" />
+            <span className="text-xs text-[#909090] w-28 shrink-0">Machine mère</span>
+            <span className="text-sm text-[#2E2E2E] flex-1">
+              <span className="font-mono text-[11px] mr-1.5 px-1.5 py-0.5 rounded" style={{ backgroundColor: '#1F3A5F18', color: '#1F3A5F' }}>{item.parent.code}</span>
+              {item.parent.name}
+            </span>
+          </div>
+        )}
         <InfoRow icon={Hash}     label="N° machine"   value={item.no_machine} />
         <InfoRow icon={MapPin}   label="Affectation"  value={item.affectation} />
         <InfoRow icon={Factory}  label="Fabricant"    value={item.fabricant} />
