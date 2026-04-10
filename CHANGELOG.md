@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.3.0] — 10 avril 2026
+
+Ajout du module Équipements (liste, détail, recherche), refonte visuelle de la page d'accueil et de connexion, amélioration de la recherche dans la liste des interventions.
+
+---
+
+### Équipements (nouveau module)
+
+- **`EquipementsPage`** : liste des équipements avec recherche par nom/code et pagination
+- **Détail équipement** : statut de santé, interventions liées, affichage des badges de priorité
+- **API** : fonctions `getEquipements` / `getEquipement` dans `src/api/equipements.js`
+- **Hooks** : `useEquipements` (liste + recherche) et `useEquipementDetail` (fiche détail)
+- **QR Code** : `QrCodePage` gère désormais la lecture d'un UUID pour rediriger vers la fiche équipement
+
+### Interventions
+
+- **Recherche en temps réel** dans `InterventionsScreen` : indicateur de frappe (typing indicator), debounce, mise à jour dynamique des résultats
+
+### UI / Branding
+
+- `LoginPage` : nouveau logo Tunnel et mise en page remaniée
+- `HomePage` : refonte du branding et de la disposition
+- `BottomNav` : styles mis à jour, icône et route équipements intégrées
+- Assets de marque ajoutés : `Tunnel_Logo.png`, SVGs (`tunnel-logo-basic`, `tunnel-logo-light`, `sidebar-mark`)
+
+### Navigation
+
+- Nouvelles routes pour `EquipementsPage` (liste et détail)
+- `StockPage` enrichi avec affichage des stocks et gestion d'état
+
+---
+
 ## [1.2.0] — 8 avril 2026
 
 Refonte du composant `ActionCard` avec navigation, unification du formulaire d'action en modal et page complète, et nettoyage des composants inutilisés.
