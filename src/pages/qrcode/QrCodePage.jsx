@@ -49,7 +49,20 @@ export default function QrCodePage() {
   const handleScan = (text) => {
     setLastResult(text)
 
-    // Si c'est un ID numérique ou une URL d'intervention, on navigue
+    // URL contenant un chemin d'équipement avec UUID
+    const equipUuidMatch = text.match(/equipements?\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)
+    if (equipUuidMatch) {
+      navigate(`/equipements/${equipUuidMatch[1]}`)
+      return
+    }
+
+    // UUID seul → fiche équipement
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text.trim())) {
+      navigate(`/equipements/${text.trim()}`)
+      return
+    }
+
+    // URL ou ID numérique d'intervention
     const idMatch = text.match(/interventions?\/(\d+)/)
     if (idMatch) {
       navigate(`/interventions/${idMatch[1]}`)

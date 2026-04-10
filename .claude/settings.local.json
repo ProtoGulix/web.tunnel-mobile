@@ -24,7 +24,9 @@
       "Bash(\"/c/Program Files/Git/usr/bin/openssl\" pkey -in .cert/key.pem -out .cert/key-clean.pem)",
       "Bash(node -e \":*)",
       "Bash(taskkill /PID 99432 /F)",
-      "Bash(powershell -Command \"Stop-Process -Id 99432 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 99432 -Force\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }

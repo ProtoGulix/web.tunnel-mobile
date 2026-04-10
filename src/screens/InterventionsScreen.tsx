@@ -1,11 +1,15 @@
-import { useState, useRef } from 'react'
-import { CalendarDays, List, Search, ChevronLeft, ChevronRight, Loader2, Clock, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { CalendarDays, List, Search, ChevronLeft, ChevronRight, Loader2, Clock, Plus, ChevronDown, ChevronUp, ClipboardList, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useInterventionsList, ageInDays } from '../hooks/interventions/useInterventionsList'
 import { usePlanningWeek } from '../hooks/planning/usePlanningWeek'
+import { useInterventionRequests } from '../hooks/interventions/useInterventionRequests'
 import { ActionCard } from '../pages/planning/ActionCard'
 import { ActionForm } from '../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../components/purchases/PurchaseRequestForm'
+import { DIList } from '../components/interventions/DIList'
+import { DIForm } from '../components/interventions/DIForm'
+import { PageHeader } from '../components/ui/PageHeader'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -216,26 +220,45 @@ function InterventionBlock({ segment }: { segment: any }) {
 }
 
 // ── Vue Liste — segmentée, API réelle ─────────────────────────────────────────
-function ListView() {
+function ListView({ searchOpen, onTyping }: { searchOpen: boolean, onTyping: (v: boolean) => void }) {
   const { segments, query, setQuery, loading, error } = useInterventionsList()
   const inputRef = useRef<HTMLInputElement>(null)
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus()
+  }, [searchOpen])
+
+  const handleChange = (val: string) => {
+    setQuery(val)
+    onTyping(true)
+    if (typingTimer.current) clearTimeout(typingTimer.current)
+    typingTimer.current = setTimeout(() => onTyping(false), 400)
+  }
 
   return (
     <>
       {/* Barre de recherche */}
-      <div className="px-3 py-2.5 bg-white border-b border-[#E0E0E0] shrink-0">
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#616161]" />
-          <input
-            ref={inputRef}
-            type="search"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Code machine, code intervention ou mot-clé..."
-            className="w-full pl-8 pr-3 py-2 rounded border border-[#E0E0E0] bg-[#F4F6F8] text-base focus:outline-none focus:shadow-[0_0_0_3px_rgba(31,58,95,0.10)] focus:border-[#1F3A5F] focus:bg-white"
-          />
+      {searchOpen && (
+        <div className="px-3 py-2 bg-white border-b border-[#E0E0E0] shrink-0">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#909090]" />
+            <input
+              ref={inputRef}
+              type="search"
+              value={query}
+              onChange={e => handleChange(e.target.value)}
+              placeholder="Code machine, intervention, mot-clé…"
+              className="w-full pl-8 pr-8 py-2 rounded border border-[#E0E0E0] bg-[#F4F6F8] text-base focus:outline-none focus:shadow-[0_0_0_3px_rgba(31,58,95,0.10)] focus:border-[#1F3A5F] focus:bg-white"
+            />
+            {query && (
+              <button onClick={() => { setQuery(''); onTyping(false) }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#909090] active:opacity-60">
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {loading && (
@@ -387,41 +410,138 @@ function PlanningView() {
   )
 }
 
+// ── Vue Demandes ──────────────────────────────────────────────────────────────
+function DemandesView() {
+  const [activeFilter, setActiveFilter] = useState('nouvelle')
+  const [showForm, setShowForm] = useState(false)
+  const { items, facets, loading, error, create, createStatus } = useInterventionRequests({ statut: activeFilter })
+
+  async function handleCreate(data: any) {
+    await create(data)
+    setShowForm(false)
+  }
+
+  if (showForm) return (
+    <div className="flex flex-col h-full">
+      <PageHeader
+        title="Nouvelle DI"
+        action={
+          <button onClick={() => setShowForm(false)} className="p-1.5 text-[#616161]">
+            <X size={20} />
+          </button>
+        }
+      />
+      <DIForm
+        onSubmit={handleCreate}
+        onCancel={() => setShowForm(false)}
+        status={createStatus.status}
+        error={createStatus.error}
+      />
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 px-4 py-3 bg-white border-b border-[#E0E0E0] flex items-center justify-between">
+        <span className="text-xs font-medium text-[#616161]">Demandes d'intervention</span>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 bg-[#1F3A5F] text-white px-3 py-1.5 rounded text-xs font-medium active:opacity-80"
+        >
+          <Plus size={14} />
+          Nouvelle
+        </button>
+      </div>
+      {facets.length > 0 && (
+        <div className="flex gap-1 px-4 py-3 bg-white border-b border-[#E0E0E0] overflow-x-auto shrink-0">
+          {facets.map((f: any) => (
+            <button
+              key={f.code}
+              onClick={() => setActiveFilter(f.code)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors border ${
+                activeFilter === f.code
+                  ? 'text-white border-transparent'
+                  : 'text-[#616161] bg-[#F4F6F8] border-[#E0E0E0]'
+              }`}
+              style={activeFilter === f.code ? { backgroundColor: f.color, borderColor: f.color } : {}}
+            >
+              {f.label}
+              {f.count > 0 && (
+                <span className={`text-[10px] ${activeFilter === f.code ? 'opacity-80' : 'text-[#616161]'}`}>
+                  {f.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto">
+        <DIList items={items} loading={loading} error={error} />
+      </div>
+    </div>
+  )
+}
+
 // ── Écran principal ───────────────────────────────────────────────────────────
 export default function InterventionsScreen() {
-  const [tab, setTab] = useState<'planning' | 'liste'>('planning')
+  const [tab, setTab] = useState<'planning' | 'liste' | 'demandes'>('planning')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [typing, setTyping] = useState(false)
+
+  const showSearch = tab === 'liste'
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
       <header className="bg-white border-b border-[#E0E0E0] px-4 pt-4 pb-0 shrink-0">
-        <h1 className="text-base font-semibold text-[#2E2E2E] mb-3">Interventions</h1>
+        <div className="flex items-center mb-3">
+          <h1 className="flex-1 text-base font-semibold text-[#2E2E2E]">Interventions</h1>
+          {showSearch && (
+            <button
+              onClick={() => setSearchOpen(s => !s)}
+              className={`p-1.5 rounded transition-colors active:opacity-60 ${searchOpen ? 'text-[#1F3A5F] bg-[#1F3A5F]/10' : 'text-[#616161]'}`}
+            >
+              {typing
+                ? <Loader2 size={18} className="animate-spin" />
+                : <Search size={18} />
+              }
+            </button>
+          )}
+        </div>
         <div className="flex">
           <button
             onClick={() => setTab('planning')}
             className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
-              tab === 'planning'
-                ? 'border-[#1F3A5F] text-[#1F3A5F]'
-                : 'border-transparent text-[#616161]'
+              tab === 'planning' ? 'border-[#1F3A5F] text-[#1F3A5F]' : 'border-transparent text-[#616161]'
             }`}
           >
             <CalendarDays size={13} />
             Planning
           </button>
           <button
-            onClick={() => setTab('liste')}
+            onClick={() => { setTab('liste'); }}
             className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
-              tab === 'liste'
-                ? 'border-[#1F3A5F] text-[#1F3A5F]'
-                : 'border-transparent text-[#616161]'
+              tab === 'liste' ? 'border-[#1F3A5F] text-[#1F3A5F]' : 'border-transparent text-[#616161]'
             }`}
           >
             <List size={13} />
-            Liste
+            Interventions
+          </button>
+          <button
+            onClick={() => setTab('demandes')}
+            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-colors ${
+              tab === 'demandes' ? 'border-[#1F3A5F] text-[#1F3A5F]' : 'border-transparent text-[#616161]'
+            }`}
+          >
+            <ClipboardList size={13} />
+            Demandes
           </button>
         </div>
       </header>
 
-      {tab === 'planning' ? <PlanningView /> : <ListView />}
+      {tab === 'planning' ? <PlanningView /> : tab === 'liste'
+        ? <ListView searchOpen={searchOpen} onTyping={setTyping} />
+        : <DemandesView />
+      }
     </div>
   )
 }
