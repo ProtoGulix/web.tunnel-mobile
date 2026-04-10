@@ -13,9 +13,11 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
-      <header className="bg-white border-b border-[#E0E0E0] px-4 pt-4 pb-3">
-        <h1 className="text-base font-semibold text-[#2E2E2E]">TUNNEL GMAO</h1>
-        <p className="text-xs text-[#616161] mt-0.5">Gestion de Maintenance Assistée par Ordinateur</p>
+      <header className="flex flex-col items-center py-6 gap-3" style={{ backgroundColor: '#2E2E2E' }}>
+        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-md">
+          <img src="/Tunnel_Logo.png" alt="Tunnel" className="w-12 h-12 object-contain" />
+        </div>
+        <p className="text-sm font-bold tracking-widest text-white uppercase">Tunnel GMAO</p>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
