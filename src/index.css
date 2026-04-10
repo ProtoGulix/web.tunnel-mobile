@@ -40,7 +40,9 @@
   :root {
     /* ── Couleurs de base ── */
     --tunnel-primary: #1f3a5f;
+    --tunnel-accent: #1f3a5f;
     --tunnel-text: #2e2e2e;
+    --tunnel-muted: #94a3b8;
     --tunnel-bg: #f4f6f8;
     --tunnel-surface: #ffffff;
     --tunnel-secondary: #616161;

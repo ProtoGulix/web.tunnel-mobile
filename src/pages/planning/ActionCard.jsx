@@ -101,7 +101,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }
-                  : { color: '#94a3b8' }
+                  : { backgroundColor: '#1F3A5F18', color: '#1F3A5F' }
                 }
               >
                 <ShoppingCart size={10} />
@@ -148,7 +148,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70 shrink-0"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }
-                  : { color: '#94a3b8' }
+                  : { backgroundColor: '#1F3A5F18', color: '#1F3A5F' }
                 }
               >
                 <ShoppingCart size={10} />
