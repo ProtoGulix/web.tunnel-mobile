@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
+import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { getEquipements } from '../../api/interventions'
 import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
 
@@ -808,17 +809,13 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
       </form>
 
       {/* Footer */}
-      <div className={`shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white${mode === 'page' ? ' safe-bottom' : ''}`}>
-        <button type="button" onClick={guardedClose}
-          className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
-          Annuler
-        </button>
-        <button type="submit" form="action-form" disabled={submitting}
-          className="flex-1 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-          {submitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+      <BottomBar>
+        <BottomBtn variant="secondary" type="button" onClick={guardedClose}>Annuler</BottomBtn>
+        <BottomBtn variant="primary" type="submit" form="action-form" disabled={submitting}
+          loading={submitting} icon={<Plus size={14} />}>
           Enregistrer
-        </button>
-      </div>
+        </BottomBtn>
+      </BottomBar>
 
       {showCategoryPicker && (
         <CategoryPicker
