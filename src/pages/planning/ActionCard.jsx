@@ -1,16 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Plus, User } from 'lucide-react'
+import { formatTime } from '../../utils/dateUtils'
 
 const MONTH_SHORT = ['jan.','fév.','mar.','avr.','mai','jun.','jul.','aoû.','sep.','oct.','nov.','déc.']
-
-function formatTime(hours) {
-  if (!hours) return null
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}min`
-  if (m === 0) return `${h}h00`
-  return `${h}h${String(m).padStart(2, '0')}`
-}
 
 function formatDateShort(dateStr) {
   if (!dateStr) return null
@@ -101,7 +93,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }
-                  : { color: '#94a3b8' }
+                  : { backgroundColor: '#1F3A5F18', color: '#1F3A5F' }
                 }
               >
                 <ShoppingCart size={10} />
@@ -148,7 +140,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70 shrink-0"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }
-                  : { color: '#94a3b8' }
+                  : { backgroundColor: '#1F3A5F18', color: '#1F3A5F' }
                 }
               >
                 <ShoppingCart size={10} />

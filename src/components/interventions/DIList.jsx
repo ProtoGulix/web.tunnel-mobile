@@ -1,7 +1,7 @@
 import { DICard } from './DICard'
 import { Loader2 } from 'lucide-react'
 
-export function DIList({ items, loading, error }) {
+export function DIList({ items, loading, error, onSelect }) {
   if (loading) return (
     <div className="flex justify-center py-12">
       <Loader2 size={24} className="animate-spin text-tunnel-muted" />
@@ -21,9 +21,9 @@ export function DIList({ items, loading, error }) {
   )
 
   return (
-    <div className="space-y-2 p-4">
+    <div className="divide-y divide-[#E0E0E0]">
       {items.map(item => (
-        <DICard key={item.id} item={item} />
+        <DICard key={item.id} item={item} onSelect={onSelect} />
       ))}
     </div>
   )

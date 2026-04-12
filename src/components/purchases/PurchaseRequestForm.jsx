@@ -3,6 +3,7 @@ import { X, Check, Loader2, ShoppingCart, Package, AlertCircle, ChevronDown } fr
 import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
+import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { searchStockItems, createPurchaseRequest } from '../../api/achats'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -68,17 +69,18 @@ const URGENCY_OPTIONS = [
 ]
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export function PurchaseRequestForm({ onClose, onDone, actionId = null }) {
+export function PurchaseRequestForm({ onClose, onDone, actionId = null, defaultStockItem = null }) {
   const { user } = useAuth()
+  const stockItemLocked = defaultStockItem != null
 
   // Article
-  const [stockItem, setStockItem] = useState(null)
+  const [stockItem, setStockItem] = useState(defaultStockItem)
   const [isSpecial, setIsSpecial] = useState(false)
-  const [itemLabel, setItemLabel] = useState('')
+  const [itemLabel, setItemLabel] = useState(defaultStockItem?.name ?? '')
 
   // Champs du formulaire
   const [quantity, setQuantity] = useState('1')
-  const [unit, setUnit] = useState('pcs')
+  const [unit, setUnit] = useState(defaultStockItem?.unit ?? 'pcs')
   const [urgency, setUrgency] = useState('normal')
   const [reason, setReason] = useState('')
   const [requesterName, setRequesterName] = useState(
@@ -193,6 +195,7 @@ export function PurchaseRequestForm({ onClose, onDone, actionId = null }) {
               <SelectionChip
                 badge={stockItem.ref}
                 label={stockItem.name}
+                locked={stockItemLocked}
                 onClear={handleClearArticle}
               />
             ) : isSpecial ? (
@@ -314,17 +317,13 @@ export function PurchaseRequestForm({ onClose, onDone, actionId = null }) {
       </form>
 
       {/* Footer */}
-      <div className="shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white">
-        <button type="button" onClick={guardedClose}
-          className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
-          Annuler
-        </button>
-        <button type="submit" form="purchase-form" disabled={submitting}
-          className="flex-1 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-          {submitting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+      <BottomBar safeBottom={false}>
+        <BottomBtn variant="secondary" type="button" onClick={guardedClose}>Annuler</BottomBtn>
+        <BottomBtn variant="primary" type="submit" form="purchase-form" disabled={submitting}
+          loading={submitting} icon={<Check size={14} />}>
           Créer
-        </button>
-      </div>
+        </BottomBtn>
+      </BottomBar>
 
       <ConfirmDialog />
     </div>

@@ -66,33 +66,48 @@ function segmentItems(items) {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useInterventionsList() {
-  const [data, setData]     = useState([])
+  const [data, setData]       = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]   = useState(null)
-  const [query, setQuery]   = useState('')
-  const intervalRef = useRef(null)
+  const [error, setError]     = useState(null)
+  const [query, setQuery]     = useState('')
+  const intervalRef   = useRef(null)
+  const abortRef      = useRef(null)
 
   function load(silent = false) {
+    // Annuler la requête précédente si elle est encore en vol
+    if (abortRef.current) abortRef.current.abort()
+    abortRef.current = new AbortController()
+    const signal = abortRef.current.signal
+
     if (!silent) setLoading(true)
     setError(null)
-    // On récupère tous les statuts actifs + archivés en un seul appel
-    // Le backend trie déjà par priority DESC, reported_date ASC
+
     searchInterventions({
       status: 'ouvert,attente_pieces,attente_prod,ferme,cancelled',
       sort: '-priority,-reported_date',
       limit: 500,
-    })
-      .then(res => setData(Array.isArray(res) ? res : (res.items ?? [])))
-      .catch(err => setError(err?.data?.detail ?? err.message))
-      .finally(() => { if (!silent) setLoading(false) })
+    }, { signal })
+      .then(res => {
+        if (signal.aborted) return
+        setData(Array.isArray(res) ? res : (res.items ?? []))
+      })
+      .catch(err => {
+        if (signal.aborted || err?.name === 'AbortError') return
+        setError(err?.data?.detail ?? err?.message ?? 'Erreur inconnue')
+      })
+      .finally(() => {
+        if (!signal.aborted && !silent) setLoading(false)
+      })
   }
 
-  // Chargement initial
+  // Chargement initial + auto-refresh silencieux toutes les 30s
   useEffect(() => {
     load()
-    // Auto-refresh silencieux toutes les 30s
     intervalRef.current = setInterval(() => load(true), 30_000)
-    return () => clearInterval(intervalRef.current)
+    return () => {
+      clearInterval(intervalRef.current)
+      if (abortRef.current) abortRef.current.abort()
+    }
   }, [])
 
   // Filtre texte côté client (search sur code, equipements.code, title)

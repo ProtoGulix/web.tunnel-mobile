@@ -2,7 +2,7 @@ import { client } from "../lib/api/client";
 
 export function getActions(params = {}) {
   const query = new URLSearchParams(params).toString();
-  return client.get(`/intervention-actions${query ? `?${query}` : ""}`);
+  return client.get(`/intervention-actions${query ? `?${query}` : ""}`).then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 
 export function createAction(data) {
@@ -15,11 +15,11 @@ export function searchInterventions(params = {}) {
 }
 
 export function getActionCategories() {
-  return client.get("/action-categories");
+  return client.get("/action-categories").then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 
 export function getComplexityFactors() {
-  return client.get("/complexity-factors");
+  return client.get("/complexity-factors").then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 
 export function createIntervention(data) {
@@ -42,5 +42,5 @@ export function searchDI(params = {}) {
 }
 
 export function getInterventionTypes() {
-  return client.get("/interventions/types");
+  return client.get("/interventions/types").then(res => Array.isArray(res) ? res : (res.items ?? res))
 }

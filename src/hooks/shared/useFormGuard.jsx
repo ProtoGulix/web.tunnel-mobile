@@ -14,6 +14,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 
 export function useFormGuard({ dirty, onClose }) {
   const [showConfirm, setShowConfirm] = useState(false)
@@ -35,10 +36,10 @@ export function useFormGuard({ dirty, onClose }) {
         onClick={() => setShowConfirm(false)}
       >
         <div
-          className="w-full bg-white rounded-t-2xl p-5 space-y-4"
+          className="w-full bg-white rounded-t-2xl"
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 px-4 py-4">
             <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
               <AlertTriangle size={18} className="text-amber-600" />
             </div>
@@ -47,22 +48,14 @@ export function useFormGuard({ dirty, onClose }) {
               <p className="text-xs text-tunnel-muted mt-0.5">Les informations saisies seront perdues.</p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg"
-            >
+          <BottomBar safeBottom={false}>
+            <BottomBtn variant="secondary" type="button" onClick={() => setShowConfirm(false)}>
               Continuer la saisie
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowConfirm(false); onClose() }}
-              className="flex-1 py-2.5 rounded-lg bg-red-500 text-white text-sm font-semibold active:bg-red-600"
-            >
+            </BottomBtn>
+            <BottomBtn variant="danger" type="button" onClick={() => { setShowConfirm(false); onClose() }}>
               Abandonner
-            </button>
-          </div>
+            </BottomBtn>
+          </BottomBar>
         </div>
       </div>
     )

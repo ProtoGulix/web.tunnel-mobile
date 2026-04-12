@@ -4,7 +4,9 @@ import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
-import { getEquipements } from '../../api/interventions'
+import { BottomBar, BottomBtn } from '../ui/BottomBar'
+import { SheetPicker } from '../ui/SheetPicker'
+import { getEquipements, getServices } from '../../api/interventions'
 import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -46,45 +48,6 @@ function CategoryPicker({ categories, selected, onSelect, onClose }) {
         </div>
       </div>
     </div>
-  )
-}
-
-// ─── SheetPicker — sélecteur bottom-sheet générique ──────────────────────────
-function SheetPicker({ title, options, value, onChange, placeholder = 'Sélectionner...' }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => String(o.value) === String(value))
-  return (
-    <>
-      <button type="button" onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 bg-white text-left focus:outline-none">
-        <span className={`text-sm ${selected ? 'font-medium text-tunnel-text' : 'text-tunnel-muted'}`}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <ChevronDown size={14} className="text-tunnel-muted shrink-0" />
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => setOpen(false)}>
-          <div className="bg-white rounded-t-2xl max-h-[72vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="px-4 pt-4 pb-3 border-b border-tunnel-border shrink-0 flex items-center justify-between">
-              <p className="text-sm font-semibold text-tunnel-text">{title}</p>
-              <button type="button" onClick={() => setOpen(false)} className="text-xs text-tunnel-muted font-medium px-2 py-1">Fermer</button>
-            </div>
-            <div className="overflow-y-auto">
-              {options.map(o => {
-                const active = String(o.value) === String(value)
-                return (
-                  <button key={o.value} type="button" onClick={() => { onChange(String(o.value)); setOpen(false) }}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 border-b border-tunnel-border text-left ${active ? 'bg-blue-50' : 'bg-white active:bg-tunnel-bg'}`}>
-                    <span className="text-sm text-tunnel-text">{o.label}</span>
-                    {active && <Check size={14} className="text-tunnel-accent shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   )
 }
 
@@ -141,10 +104,20 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
   const [demandeurNom, setDemandeurNom] = useState(
     user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : ''
   )
-  const [demandeurService, setDemandeurService] = useState('')
+  const [serviceId, setServiceId] = useState('')
+  const [services, setServices] = useState([])
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    getServices().then(setServices).catch(() => {})
+  }, [])
+
+  const serviceOptions = [
+    { value: '', label: '— Aucun —' },
+    ...services.map(s => ({ value: s.id, label: s.label }))
+  ]
 
   async function handleSubmit() {
     if (!demandeurNom.trim()) { setError('Le nom du demandeur est requis'); return }
@@ -155,7 +128,7 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
       const di = await createDI({
         machine_id: equip.id,
         demandeur_nom: demandeurNom.trim(),
-        demandeur_service: demandeurService.trim() || undefined,
+        service_id: serviceId || undefined,
         description: description.trim(),
       })
       onCreated(di)
@@ -177,8 +150,14 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
       </div>
       <div>
         <label className="text-xs font-bold text-tunnel-text mb-1 block">Service</label>
-        <input className={inputCls} value={demandeurService} onChange={e => setDemandeurService(e.target.value)}
-          placeholder="Production, Maintenance..." />
+        <SheetPicker
+          title="Service"
+          options={serviceOptions}
+          value={serviceId}
+          onChange={setServiceId}
+          placeholder="Sélectionner un service…"
+          zIndex={65}
+        />
       </div>
       <div>
         <label className="text-xs font-bold text-tunnel-text mb-1 block">Description *</label>
@@ -201,7 +180,7 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
   )
 }
 
-// ─── Formulaire Intervention inline ──────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 const COMPLEXITY_OPTIONS = [
   { value: '1', label: '1 — Très simple' },
   { value: '2', label: '2 — Simple' },
@@ -215,24 +194,18 @@ const COMPLEXITY_OPTIONS = [
   { value: '10', label: '10 — Expert' },
 ]
 
-const PRIORITY_OPTIONS = [
-  { value: 'faible', label: 'Faible' },
-  { value: 'normale', label: 'Normale' },
+// ─── Formulaire Intervention inline (dans ActionForm) ────────────────────────
+const PRIORITY_OPTIONS_INLINE = [
+  { value: 'faible',    label: 'Faible' },
+  { value: 'normale',   label: 'Normale' },
   { value: 'important', label: 'Important' },
-  { value: 'urgent', label: 'Urgent' },
+  { value: 'urgent',    label: 'Urgent' },
 ]
 
 function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
   const [title, setTitle] = useState(di?.description ?? '')
   const [typeInter, setTypeInter] = useState('')
   const [typeOptions, setTypeOptions] = useState([])
-
-  useEffect(() => {
-    getInterventionTypes().then(types => {
-      setTypeOptions(types)
-      if (types.length > 0) setTypeInter(types[0].id)
-    }).catch(() => {})
-  }, [])
   const [priority, setPriority] = useState('normale')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
   const [loading, setLoading] = useState(false)
@@ -240,7 +213,14 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
 
   const techInitials = user?.initial ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : 'XX')
 
-  async function handleSubmit() {
+  useEffect(() => {
+    getInterventionTypes().then(types => {
+      setTypeOptions(types)
+      if (types.length > 0) setTypeInter(types[0].id)
+    }).catch(() => {})
+  }, [])
+
+  const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     try {
@@ -294,7 +274,7 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
           <label className="text-xs font-bold text-tunnel-text mb-1 block">Priorité</label>
           <SheetPicker
             title="Priorité"
-            options={PRIORITY_OPTIONS}
+            options={PRIORITY_OPTIONS_INLINE}
             value={priority}
             onChange={setPriority}
             placeholder="Sélectionner une priorité..."
@@ -808,17 +788,13 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
       </form>
 
       {/* Footer */}
-      <div className={`shrink-0 flex gap-3 px-4 py-3 border-t border-tunnel-border bg-white${mode === 'page' ? ' safe-bottom' : ''}`}>
-        <button type="button" onClick={guardedClose}
-          className="flex-1 py-2.5 rounded-lg border border-tunnel-border text-sm font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
-          Annuler
-        </button>
-        <button type="submit" form="action-form" disabled={submitting}
-          className="flex-1 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-          {submitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+      <BottomBar>
+        <BottomBtn variant="secondary" type="button" onClick={guardedClose}>Annuler</BottomBtn>
+        <BottomBtn variant="primary" type="submit" form="action-form" disabled={submitting}
+          loading={submitting} icon={<Plus size={14} />}>
           Enregistrer
-        </button>
-      </div>
+        </BottomBtn>
+      </BottomBar>
 
       {showCategoryPicker && (
         <CategoryPicker

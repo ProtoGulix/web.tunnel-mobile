@@ -5,8 +5,16 @@ export function getInterventionRequests(params = {}) {
   return client.get(`/intervention-requests${query ? `?${query}` : ""}`);
 }
 
+export function getInterventionRequest(id) {
+  return client.get(`/intervention-requests/${id}`);
+}
+
 export function createInterventionRequest(data) {
   return client.post("/intervention-requests", data);
+}
+
+export function transitionInterventionRequest(id, data) {
+  return client.post(`/intervention-requests/${id}/transition`, data);
 }
 
 export function getEquipements(search = "") {
@@ -19,9 +27,11 @@ export function getIntervention(id) {
   return client.get(`/interventions/${id}`);
 }
 
-export function searchInterventions(params = {}) {
+export function searchInterventions(params = {}, options = {}) {
   const query = new URLSearchParams({ limit: 50, ...params }).toString();
-  return client.get(`/interventions?${query}`).then((res) => res.items ?? res);
+  return client
+    .get(`/interventions?${query}`, options)
+    .then((res) => res.items ?? res);
 }
 
 export function getInterventionActions(interventionId) {
@@ -36,4 +46,8 @@ export function changeInterventionStatus(data) {
 
 export function getInterventionStatuses() {
   return client.get("/intervention-status");
+}
+
+export function getServices() {
+  return client.get("/services");
 }

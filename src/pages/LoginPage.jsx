@@ -34,10 +34,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-tunnel-bg flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4" style={{ background: '#1a2332' }}>
-            <span className="text-white font-bold text-xl font-mono">T</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-3 bg-white shadow-md" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
+            <img src="/Tunnel_Logo.png" alt="Tunnel" className="w-12 h-12 object-contain" />
           </div>
-          <h1 className="text-lg font-semibold text-tunnel-text">Tunnel Mobile</h1>
+          <h1 className="text-lg font-bold tracking-widest text-tunnel-text uppercase">Tunnel GMAO</h1>
           <p className="text-sm text-tunnel-muted mt-1">GMAO Technicien</p>
           <div className="mt-3 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full">
             {serverStatus === 'checking' && <><span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse inline-block" /><span className="text-yellow-600">Vérification du serveur…</span></>}

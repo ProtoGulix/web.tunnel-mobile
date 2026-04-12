@@ -7,15 +7,12 @@ import { changeInterventionStatus, getInterventionStatuses } from '../../api/int
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
+import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
+import { formatDateFr } from '../../utils/dateUtils'
 
 function getInitials(name) {
   if (!name) return '?'
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function formatDateFr(dateStr) {
-  if (!dateStr) return ''
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr))
 }
 
 function DICard({ request }) {
@@ -50,8 +47,8 @@ function DICard({ request }) {
           {getInitials(request.demandeur_nom)}
         </span>
         <span className="text-xs text-tunnel-muted">—</span>
-        {request.demandeur_service && (
-          <span className="text-xs text-tunnel-muted">{request.demandeur_service}</span>
+        {(request.service?.label ?? request.demandeur_service) && (
+          <span className="text-xs text-tunnel-muted">{request.service?.label ?? request.demandeur_service}</span>
         )}
         {request.description && (
           <span className="text-xs text-tunnel-text truncate flex-1 min-w-0">{request.description}</span>
@@ -283,15 +280,11 @@ export default function InterventionDetailPage() {
 
       {/* FAB bottom bar */}
       {!loading && intervention && (
-        <div className="shrink-0 px-4 py-3 border-t border-tunnel-border bg-white safe-bottom">
-          <button
-            onClick={() => setShowActionForm(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-tunnel-accent text-white text-sm font-semibold active:opacity-90"
-          >
-            <Plus size={16} />
+        <BottomBar>
+          <BottomBtn variant="primary" onClick={() => setShowActionForm(true)} icon={<Plus size={16} />}>
             Ajouter une action
-          </button>
-        </div>
+          </BottomBtn>
+        </BottomBar>
       )}
 
       {showStatusSheet && (

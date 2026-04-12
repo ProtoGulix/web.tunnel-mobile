@@ -24,7 +24,12 @@
       "Bash(\"/c/Program Files/Git/usr/bin/openssl\" pkey -in .cert/key.pem -out .cert/key-clean.pem)",
       "Bash(node -e \":*)",
       "Bash(taskkill /PID 99432 /F)",
-      "Bash(powershell -Command \"Stop-Process -Id 99432 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 99432 -Force\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(git -C \"c:/Users/Quentin/DEV/web.tunnel-mobile\" diff -- src/hooks/stock/useStockItems.js src/api/stock.js)",
+      "Bash(git -C \"c:/Users/Quentin/DEV/web.tunnel-mobile\" log --oneline --follow -- src/hooks/stock/useStockItems.js src/components/stock/StockItemList.jsx)",
+      "Bash(git -C \"c:/Users/Quentin/DEV/web.tunnel-mobile\" show HEAD:src/hooks/stock/useStockItems.js)"
     ]
   }
 }
