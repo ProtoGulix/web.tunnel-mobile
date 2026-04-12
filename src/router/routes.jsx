@@ -8,6 +8,7 @@ import InterventionDetailPage from '../pages/interventions/InterventionDetailPag
 import AddActionPage from '../pages/interventions/AddActionPage'
 import AddPurchasePage from '../pages/interventions/AddPurchasePage'
 import StockPage from '../pages/stock/StockPage'
+import InterventionRequestsPage from '../pages/intervention-requests/InterventionRequestsPage'
 import EquipementsPage from '../pages/equipements/EquipementsPage'
 import QrCodePage from '../pages/qrcode/QrCodePage'
 
@@ -28,19 +29,23 @@ export default function AppRoutes() {
       }>
         <Route index element={<HomePage />} />
 
-        {/* Interventions */}
+        {/* Interventions — ?tab=planning|liste|demandes */}
         <Route path="interventions" element={<InterventionsPage />} />
         <Route path="interventions/:id" element={<InterventionDetailPage />} />
         <Route path="interventions/:id/add-action" element={<AddActionPage />} />
         <Route path="interventions/:id/add-purchase" element={<AddPurchasePage />} />
 
+        {/* Demandes d'intervention */}
+        <Route path="intervention-requests" element={<InterventionRequestsPage />} />
+        <Route path="intervention-requests/:requestId" element={<InterventionRequestsPage />} />
+
         {/* Compatibilité anciennes routes */}
-        <Route path="intervention-requests" element={<Navigate to="/interventions" replace />} />
-        <Route path="demande-intervention" element={<Navigate to="/interventions" replace />} />
+        <Route path="demande-intervention" element={<Navigate to="/intervention-requests" replace />} />
         <Route path="achats" element={<Navigate to="/stock" replace />} />
 
-        {/* Stock (inclut demandes d'achat) */}
+        {/* Stock — ?tab=stock|achats, détail article via /stock/items/:id?purchase=1 */}
         <Route path="stock" element={<StockPage />} />
+        <Route path="stock/items/:itemId" element={<StockPage />} />
 
         {/* Équipements — UUID dans l'URL pour QR code */}
         <Route path="equipements" element={<EquipementsPage />} />

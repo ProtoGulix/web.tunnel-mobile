@@ -48,28 +48,37 @@ export default function QrCodePage() {
 
   const handleScan = (text) => {
     setLastResult(text)
+    const t = text.trim()
 
     // URL contenant un chemin d'équipement avec UUID
-    const equipUuidMatch = text.match(/equipements?\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)
+    const equipUuidMatch = t.match(/equipements?\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)
     if (equipUuidMatch) {
       navigate(`/equipements/${equipUuidMatch[1]}`)
       return
     }
 
+    // Article stock : /stock/<uuid> ou /stock/<uuid>?purchase=1
+    const stockUuidMatch = t.match(/stock\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\?purchase=1)?/i)
+    if (stockUuidMatch) {
+      const suffix = stockUuidMatch[2] ? '?purchase=1' : ''
+      navigate(`/stock/items/${stockUuidMatch[1]}${suffix}`)
+      return
+    }
+
     // UUID seul → fiche équipement
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text.trim())) {
-      navigate(`/equipements/${text.trim()}`)
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) {
+      navigate(`/equipements/${t}`)
       return
     }
 
     // URL ou ID numérique d'intervention
-    const idMatch = text.match(/interventions?\/(\d+)/)
+    const idMatch = t.match(/interventions?\/(\d+)/)
     if (idMatch) {
       navigate(`/interventions/${idMatch[1]}`)
       return
     }
-    if (/^\d+$/.test(text.trim())) {
-      navigate(`/interventions/${text.trim()}`)
+    if (/^\d+$/.test(t)) {
+      navigate(`/interventions/${t}`)
       return
     }
     // Sinon on affiche juste le résultat

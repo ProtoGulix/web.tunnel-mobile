@@ -202,7 +202,7 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
   )
 }
 
-// ─── Formulaire Intervention inline ──────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 const COMPLEXITY_OPTIONS = [
   { value: '1', label: '1 — Très simple' },
   { value: '2', label: '2 — Simple' },
@@ -216,24 +216,18 @@ const COMPLEXITY_OPTIONS = [
   { value: '10', label: '10 — Expert' },
 ]
 
-const PRIORITY_OPTIONS = [
-  { value: 'faible', label: 'Faible' },
-  { value: 'normale', label: 'Normale' },
+// ─── Formulaire Intervention inline (dans ActionForm) ────────────────────────
+const PRIORITY_OPTIONS_INLINE = [
+  { value: 'faible',    label: 'Faible' },
+  { value: 'normale',   label: 'Normale' },
   { value: 'important', label: 'Important' },
-  { value: 'urgent', label: 'Urgent' },
+  { value: 'urgent',    label: 'Urgent' },
 ]
 
 function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
   const [title, setTitle] = useState(di?.description ?? '')
   const [typeInter, setTypeInter] = useState('')
   const [typeOptions, setTypeOptions] = useState([])
-
-  useEffect(() => {
-    getInterventionTypes().then(types => {
-      setTypeOptions(types)
-      if (types.length > 0) setTypeInter(types[0].id)
-    }).catch(() => {})
-  }, [])
   const [priority, setPriority] = useState('normale')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
   const [loading, setLoading] = useState(false)
@@ -241,7 +235,14 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
 
   const techInitials = user?.initial ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : 'XX')
 
-  async function handleSubmit() {
+  useEffect(() => {
+    getInterventionTypes().then(types => {
+      setTypeOptions(types)
+      if (types.length > 0) setTypeInter(types[0].id)
+    }).catch(() => {})
+  }, [])
+
+  const handleSubmit = async () => {
     setLoading(true)
     setError(null)
     try {
@@ -295,7 +296,7 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
           <label className="text-xs font-bold text-tunnel-text mb-1 block">Priorité</label>
           <SheetPicker
             title="Priorité"
-            options={PRIORITY_OPTIONS}
+            options={PRIORITY_OPTIONS_INLINE}
             value={priority}
             onChange={setPriority}
             placeholder="Sélectionner une priorité..."

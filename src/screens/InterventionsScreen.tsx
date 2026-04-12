@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { CalendarDays, List, Search, ChevronLeft, ChevronRight, Loader2, Clock, Plus, ChevronDown, ChevronUp, ClipboardList, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useInterventionsList, ageInDays } from '../hooks/interventions/useInterventionsList'
 import { usePlanningWeek } from '../hooks/planning/usePlanningWeek'
 import { useInterventionRequests } from '../hooks/interventions/useInterventionRequests'
@@ -413,6 +413,7 @@ function PlanningView() {
 
 // ── Vue Demandes ──────────────────────────────────────────────────────────────
 function DemandesView() {
+  const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('nouvelle')
   const [showForm, setShowForm] = useState(false)
   const { items, facets, loading, error, create, createStatus } = useInterventionRequests({ statut: activeFilter })
@@ -467,7 +468,7 @@ function DemandesView() {
         </div>
       )}
       <div className="flex-1 overflow-y-auto">
-        <DIList items={items} loading={loading} error={error} />
+        <DIList items={items} loading={loading} error={error} onSelect={(id: string) => navigate(`/intervention-requests/${id}`)} />
       </div>
       <BottomBar>
         <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
@@ -480,7 +481,11 @@ function DemandesView() {
 
 // ── Écran principal ───────────────────────────────────────────────────────────
 export default function InterventionsScreen() {
-  const [tab, setTab] = useState<'planning' | 'liste' | 'demandes'>('planning')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const VALID_TABS = ['planning', 'liste', 'demandes']
+  const tab = VALID_TABS.includes(searchParams.get('tab') ?? '') ? searchParams.get('tab')! : 'planning'
+  const setTab = (key: string) => { setSearchParams({ tab: key }, { replace: true }); setSearchOpen(false) }
+
   const [searchOpen, setSearchOpen] = useState(false)
   const [typing, setTyping] = useState(false)
 

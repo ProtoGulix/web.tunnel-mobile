@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight, AlertTriangle, CheckCircle, AlertCircle, Cpu, Calendar, Hash, Tag, MapPin, Factory, FileText, QrCode } from 'lucide-react'
 import { useEquipements } from '../../hooks/equipements/useEquipements'
 import { useEquipementDetail } from '../../hooks/equipements/useEquipementDetail'
@@ -210,22 +210,21 @@ function InterventionRow({ inter, faded = false, onNavigate }) {
 }
 
 // ── Liste équipements ─────────────────────────────────────────────────────────
-function EquipementsList({ onSelect, searchOpen }) {
-  const [selectedClass, setSelectedClass] = useState(null)
+function EquipementsList({ onSelect, searchOpen, selectedClass, onClassChange, search, onSearchChange }) {
   const filters = selectedClass ? { select_class: selectedClass } : {}
-  const { items, facets, loading, error, search, setSearch } = useEquipements(filters)
+  const { items, facets, loading, error } = useEquipements(filters, search)
 
   return (
     <>
       {searchOpen && (
-        <SearchBar value={search} onChange={setSearch} placeholder="Code, nom, affectation…" />
+        <SearchBar value={search} onChange={onSearchChange} placeholder="Code, nom, affectation…" />
       )}
 
       {facets.length > 0 && (
         <FilterChips
           chips={facets.map(f => ({ key: f.code ?? '__none__', label: f.label ?? 'Sans classe', count: f.count }))}
           active={selectedClass}
-          onChange={key => setSelectedClass(key === '__none__' ? null : key)}
+          onChange={key => onClassChange(key === '__none__' ? null : key)}
         />
       )}
 
@@ -253,18 +252,26 @@ function EquipementsList({ onSelect, searchOpen }) {
 export default function EquipementsPage() {
   const { uuid } = useParams()
   const navigate = useNavigate()
-  const [selectedId, setSelectedId] = useState(uuid ?? null)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const effectiveId = uuid ?? selectedId
+  const selectedClass = searchParams.get('class') || null
+  const search = searchParams.get('q') ?? ''
+
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
 
   const handleSelect = (id) => {
-    setSelectedId(id)
     navigate(`/equipements/${id}`, { replace: false })
   }
 
   const handleBack = () => {
-    setSelectedId(null)
     setSearchOpen(false)
     navigate('/equipements', { replace: false })
   }
@@ -272,15 +279,22 @@ export default function EquipementsPage() {
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
       <PageHeader
-        title={effectiveId ? 'Fiche équipement' : 'Équipements'}
-        onBack={effectiveId ? handleBack : undefined}
-        onSearch={effectiveId ? undefined : () => setSearchOpen(s => !s)}
+        title={uuid ? 'Fiche équipement' : 'Équipements'}
+        onBack={uuid ? handleBack : undefined}
+        onSearch={uuid ? undefined : () => setSearchOpen(s => !s)}
         searchActive={searchOpen}
       />
 
-      {effectiveId
-        ? <EquipementDetail uuid={effectiveId} />
-        : <EquipementsList onSelect={handleSelect} searchOpen={searchOpen} />
+      {uuid
+        ? <EquipementDetail uuid={uuid} />
+        : <EquipementsList
+            onSelect={handleSelect}
+            searchOpen={searchOpen}
+            selectedClass={selectedClass}
+            onClassChange={code => setParam('class', code)}
+            search={search}
+            onSearchChange={v => setParam('q', v)}
+          />
       }
     </div>
   )
