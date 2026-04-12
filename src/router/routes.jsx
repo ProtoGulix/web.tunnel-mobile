@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import AppShell from '../components/layout/AppShell'
+import { ErrorBoundary } from '../components/ui/ErrorBoundary'
 import LoginPage from '../pages/LoginPage'
 import HomePage from '../pages/home/HomePage'
 import InterventionsPage from '../pages/interventions/InterventionsPage'
@@ -27,32 +28,40 @@ export default function AppRoutes() {
           <AppShell />
         </PrivateRoute>
       }>
-        <Route index element={<HomePage />} />
+        <Route index element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
 
         {/* Interventions — ?tab=planning|liste|demandes */}
-        <Route path="interventions" element={<InterventionsPage />} />
-        <Route path="interventions/:id" element={<InterventionDetailPage />} />
-        <Route path="interventions/:id/add-action" element={<AddActionPage />} />
-        <Route path="interventions/:id/add-purchase" element={<AddPurchasePage />} />
+        <Route path="interventions" element={<ErrorBoundary><InterventionsPage /></ErrorBoundary>} />
+        <Route path="interventions/:id" element={<ErrorBoundary><InterventionDetailPage /></ErrorBoundary>} />
+        <Route path="interventions/:id/add-action" element={<ErrorBoundary><AddActionPage /></ErrorBoundary>} />
+        <Route path="interventions/:id/add-purchase" element={<ErrorBoundary><AddPurchasePage /></ErrorBoundary>} />
 
         {/* Demandes d'intervention */}
-        <Route path="intervention-requests" element={<InterventionRequestsPage />} />
-        <Route path="intervention-requests/:requestId" element={<InterventionRequestsPage />} />
+        <Route path="intervention-requests" element={<ErrorBoundary><InterventionRequestsPage /></ErrorBoundary>} />
+        <Route path="intervention-requests/:requestId" element={<ErrorBoundary><InterventionRequestsPage /></ErrorBoundary>} />
 
         {/* Compatibilité anciennes routes */}
         <Route path="demande-intervention" element={<Navigate to="/intervention-requests" replace />} />
         <Route path="achats" element={<Navigate to="/stock" replace />} />
 
         {/* Stock — ?tab=stock|achats, détail article via /stock/items/:id?purchase=1 */}
-        <Route path="stock" element={<StockPage />} />
-        <Route path="stock/items/:itemId" element={<StockPage />} />
+        <Route path="stock" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />
+        <Route path="stock/items/:itemId" element={<ErrorBoundary><StockPage /></ErrorBoundary>} />
 
         {/* Équipements — UUID dans l'URL pour QR code */}
-        <Route path="equipements" element={<EquipementsPage />} />
-        <Route path="equipements/:uuid" element={<EquipementsPage />} />
+        <Route path="equipements" element={<ErrorBoundary><EquipementsPage /></ErrorBoundary>} />
+        <Route path="equipements/:uuid" element={<ErrorBoundary><EquipementsPage /></ErrorBoundary>} />
 
         {/* QR Code */}
-        <Route path="qrcode" element={<QrCodePage />} />
+        <Route path="qrcode" element={<ErrorBoundary><QrCodePage /></ErrorBoundary>} />
+
+        {/* 404 */}
+        <Route path="*" element={
+          <div className="flex flex-col items-center justify-center h-full px-6 text-center bg-[#F4F6F8]">
+            <p className="text-base font-semibold text-[#2E2E2E] mb-1">Page introuvable</p>
+            <p className="text-xs text-[#616161]">Cette URL n'existe pas.</p>
+          </div>
+        } />
       </Route>
     </Routes>
   )

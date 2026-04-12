@@ -1,16 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Plus, User } from 'lucide-react'
+import { formatTime } from '../../utils/dateUtils'
 
 const MONTH_SHORT = ['jan.','fév.','mar.','avr.','mai','jun.','jul.','aoû.','sep.','oct.','nov.','déc.']
-
-function formatTime(hours) {
-  if (!hours) return null
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}min`
-  if (m === 0) return `${h}h00`
-  return `${h}h${String(m).padStart(2, '0')}`
-}
 
 function formatDateShort(dateStr) {
   if (!dateStr) return null
