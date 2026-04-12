@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Package, ShoppingCart, Plus } from 'lucide-react'
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { DAList } from '../../components/achats/DAList'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 import { usePurchaseRequests } from '../../hooks/achats/usePurchaseRequests'
@@ -10,8 +11,8 @@ import { StockItemDetail } from '../../components/stock/StockItemDetail'
 import { useStockItems } from '../../hooks/stock/useStockItems'
 
 const TABS = [
-  { key: 'stock',  label: 'Stock',             icon: Package },
-  { key: 'achats', label: "Demandes d'achat",  icon: ShoppingCart },
+  { key: 'stock',  label: 'Stock',            icon: Package },
+  { key: 'achats', label: "Demandes d'achat", icon: ShoppingCart },
 ]
 
 function TabBar({ active, onChange }) {
@@ -53,47 +54,95 @@ function AchatsView() {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function StockPage() {
-  const [tab, setTab] = useState('stock')
-  const [selectedId, setSelectedId] = useState(null)
+  const { itemId } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+
+  // Onglet actif — persisté dans ?tab=
+  const tab = TABS.some(t => t.key === searchParams.get('tab'))
+    ? searchParams.get('tab')
+    : 'stock'
+
+  // Filtres — persistés dans ?family= et ?sub=
+  const search      = searchParams.get('q') ?? ''
+  const familyCode  = searchParams.get('family') ?? ''
+  const subFamilyCode = searchParams.get('sub') ?? ''
+
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const { items, loading, error, facets, search, setSearch, familyCode, setFamilyCode, subFamilyCode, setSubFamilyCode } = useStockItems()
+  const { items, loading, error, facets } = useStockItems({ search, familyCode, subFamilyCode })
 
-  const handleTabChange = (key) => { setTab(key); setSelectedId(null); setSearchOpen(false) }
-  const handleSelect    = (id)  => { setSelectedId(id); setSearchOpen(false) }
-  const handleBack      = ()    => setSelectedId(null)
+  const openPurchase = searchParams.get('purchase') === '1'
 
-  const showSearch = tab === 'stock' && !selectedId
-  const title = selectedId
-    ? (items.find(i => i.id === selectedId)?.name ?? '…')
+  // Helpers pour mettre à jour un param sans effacer les autres
+  const setParam = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
+
+  const handleTabChange = (key) => {
+    setSearchParams({ tab: key }, { replace: true })
+    setSearchOpen(false)
+  }
+
+  const handleSelect = (id) => {
+    navigate(`/stock/items/${id}`, { replace: false })
+    setSearchOpen(false)
+  }
+
+  const handleBack = () => {
+    navigate('/stock', { replace: false })
+  }
+
+  const handleFamilyChange = (code) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (code) next.set('family', code)
+      else next.delete('family')
+      next.delete('sub')
+      return next
+    }, { replace: true })
+  }
+
+  const handleSubFamilyChange = (code) => {
+    setParam('sub', code)
+  }
+
+  const showSearch = tab === 'stock' && !itemId
+  const title = itemId
+    ? (items.find(i => i.id === itemId)?.name ?? '…')
     : 'Stock'
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
       <PageHeader
         title={title}
-        onBack={selectedId ? handleBack : undefined}
+        onBack={itemId ? handleBack : undefined}
         onSearch={showSearch ? () => setSearchOpen(s => !s) : undefined}
         searchActive={searchOpen}
-        tabs={!selectedId && <TabBar active={tab} onChange={handleTabChange} />}
+        tabs={!itemId && <TabBar active={tab} onChange={handleTabChange} />}
       />
 
       {tab === 'stock' ? (
-        selectedId ? (
-          <StockItemDetail id={selectedId} />
+        itemId ? (
+          <StockItemDetail id={itemId} openPurchaseOnMount={openPurchase} />
         ) : (
           <StockItemList
             items={items}
             loading={loading}
             error={error}
             search={search}
-            onSearchChange={setSearch}
+            onSearchChange={v => setParam('q', v)}
             searchOpen={searchOpen}
             facets={facets}
             familyCode={familyCode}
-            onFamilyChange={setFamilyCode}
+            onFamilyChange={handleFamilyChange}
             subFamilyCode={subFamilyCode}
-            onSubFamilyChange={setSubFamilyCode}
+            onSubFamilyChange={handleSubFamilyChange}
             onSelect={handleSelect}
           />
         )

@@ -5,8 +5,16 @@ export function getInterventionRequests(params = {}) {
   return client.get(`/intervention-requests${query ? `?${query}` : ""}`);
 }
 
+export function getInterventionRequest(id) {
+  return client.get(`/intervention-requests/${id}`);
+}
+
 export function createInterventionRequest(data) {
   return client.post("/intervention-requests", data);
+}
+
+export function transitionInterventionRequest(id, data) {
+  return client.post(`/intervention-requests/${id}/transition`, data);
 }
 
 export function getEquipements(search = "") {

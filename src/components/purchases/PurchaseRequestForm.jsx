@@ -69,17 +69,18 @@ const URGENCY_OPTIONS = [
 ]
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export function PurchaseRequestForm({ onClose, onDone, actionId = null }) {
+export function PurchaseRequestForm({ onClose, onDone, actionId = null, defaultStockItem = null }) {
   const { user } = useAuth()
+  const stockItemLocked = defaultStockItem != null
 
   // Article
-  const [stockItem, setStockItem] = useState(null)
+  const [stockItem, setStockItem] = useState(defaultStockItem)
   const [isSpecial, setIsSpecial] = useState(false)
-  const [itemLabel, setItemLabel] = useState('')
+  const [itemLabel, setItemLabel] = useState(defaultStockItem?.name ?? '')
 
   // Champs du formulaire
   const [quantity, setQuantity] = useState('1')
-  const [unit, setUnit] = useState('pcs')
+  const [unit, setUnit] = useState(defaultStockItem?.unit ?? 'pcs')
   const [urgency, setUrgency] = useState('normal')
   const [reason, setReason] = useState('')
   const [requesterName, setRequesterName] = useState(
@@ -194,6 +195,7 @@ export function PurchaseRequestForm({ onClose, onDone, actionId = null }) {
               <SelectionChip
                 badge={stockItem.ref}
                 label={stockItem.name}
+                locked={stockItemLocked}
                 onClear={handleClearArticle}
               />
             ) : isSpecial ? (

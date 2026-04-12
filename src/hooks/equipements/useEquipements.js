@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { getEquipements } from '../../api/equipements'
 import { useDebounce } from '../shared/useDebounce'
 
-export function useEquipements(filters = {}) {
+export function useEquipements(filters = {}, search = '') {
   const [items, setItems] = useState([])
   const [facets, setFacets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [search, setSearch] = useState('')
 
   const debouncedSearch = useDebounce(search, 600)
   const filtersKey = JSON.stringify({ ...filters, search: debouncedSearch })
@@ -28,7 +28,5 @@ export function useEquipements(filters = {}) {
 
   useEffect(() => { load() }, [load])
 
-  const searching = search !== debouncedSearch
-
-  return { items, facets, loading, error, reload: load, search, setSearch, searching }
+  return { items, facets, loading, error, reload: load }
 }
