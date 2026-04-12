@@ -6,7 +6,7 @@ import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
-import { getEquipements } from '../../api/interventions'
+import { getEquipements, getServices } from '../../api/interventions'
 import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -104,10 +104,20 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
   const [demandeurNom, setDemandeurNom] = useState(
     user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : ''
   )
-  const [demandeurService, setDemandeurService] = useState('')
+  const [serviceId, setServiceId] = useState('')
+  const [services, setServices] = useState([])
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    getServices().then(setServices).catch(() => {})
+  }, [])
+
+  const serviceOptions = [
+    { value: '', label: '— Aucun —' },
+    ...services.map(s => ({ value: s.id, label: s.label }))
+  ]
 
   async function handleSubmit() {
     if (!demandeurNom.trim()) { setError('Le nom du demandeur est requis'); return }
@@ -118,7 +128,7 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
       const di = await createDI({
         machine_id: equip.id,
         demandeur_nom: demandeurNom.trim(),
-        demandeur_service: demandeurService.trim() || undefined,
+        service_id: serviceId || undefined,
         description: description.trim(),
       })
       onCreated(di)
@@ -140,8 +150,14 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
       </div>
       <div>
         <label className="text-xs font-bold text-tunnel-text mb-1 block">Service</label>
-        <input className={inputCls} value={demandeurService} onChange={e => setDemandeurService(e.target.value)}
-          placeholder="Production, Maintenance..." />
+        <SheetPicker
+          title="Service"
+          options={serviceOptions}
+          value={serviceId}
+          onChange={setServiceId}
+          placeholder="Sélectionner un service…"
+          zIndex={65}
+        />
       </div>
       <div>
         <label className="text-xs font-bold text-tunnel-text mb-1 block">Description *</label>

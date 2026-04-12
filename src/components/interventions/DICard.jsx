@@ -60,8 +60,8 @@ export function DICard({ item, onSelect }) {
           {item.demandeur_nom && (
             <span className="text-[11px] text-[#616161]">{item.demandeur_nom}</span>
           )}
-          {item.demandeur_service && (
-            <span className="text-[11px] text-[#909090]">· {item.demandeur_service}</span>
+          {(item.service?.label ?? item.demandeur_service) && (
+            <span className="text-[11px] text-[#909090]">· {item.service?.label ?? item.demandeur_service}</span>
           )}
         </div>
       </div>

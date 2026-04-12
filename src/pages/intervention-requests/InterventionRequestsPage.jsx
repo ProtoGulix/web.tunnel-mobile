@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, X, User, Briefcase, FileText, Hash, Calendar, ChevronRight, Link2, Loader2, Wrench } from 'lucide-react'
+import { Plus, User, Briefcase, FileText, Hash, Calendar, ChevronRight, Link2, Loader2, Wrench } from 'lucide-react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { DIList } from '../../components/interventions/DIList'
@@ -166,7 +166,7 @@ const DIDetail = ({ id, onNavigateIntervention }) => {
         <div className="bg-white mt-2 px-4">
           <InfoRow icon={FileText}  label="Description"  value={item.description} />
           <InfoRow icon={User}      label="Demandeur"    value={item.demandeur_nom} />
-          <InfoRow icon={Briefcase} label="Service"      value={item.demandeur_service} />
+          <InfoRow icon={Briefcase} label="Service"      value={item.service?.label ?? item.demandeur_service} />
           <InfoRow icon={Calendar}  label="Créée le"     value={formatDateFr(item.created_at)} />
           {item.updated_at !== item.created_at && (
             <InfoRow icon={Calendar} label="Mise à jour" value={formatDateFr(item.updated_at)} />
@@ -285,26 +285,6 @@ export default function InterventionRequestsPage() {
     )
   }
 
-  // ── Vue liste + formulaire ──
-  if (showForm) return (
-    <div className="flex flex-col h-full">
-      <PageHeader
-        title="Nouvelle DI"
-        action={
-          <button onClick={() => setShowForm(false)} className="p-1.5 text-[#616161]">
-            <X size={20} />
-          </button>
-        }
-      />
-      <DIForm
-        onSubmit={handleCreate}
-        onCancel={() => setShowForm(false)}
-        status={createStatus.status}
-        error={createStatus.error}
-      />
-    </div>
-  )
-
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
       <PageHeader title="Demandes d'intervention" />
@@ -347,6 +327,15 @@ export default function InterventionRequestsPage() {
           Nouvelle demande
         </BottomBtn>
       </BottomBar>
+
+      {showForm && (
+        <DIForm
+          onSubmit={handleCreate}
+          onClose={() => setShowForm(false)}
+          status={createStatus.status}
+          error={createStatus.error}
+        />
+      )}
     </div>
   )
 }
