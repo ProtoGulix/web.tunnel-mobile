@@ -13,15 +13,7 @@ import { useInterventionRequests } from '../../hooks/interventions/useInterventi
 import { useInterventionRequestDetail } from '../../hooks/interventions/useInterventionRequestDetail'
 import { transitionInterventionRequest, getIntervention } from '../../api/interventions'
 import { INTERVENTION_STATUSES } from '../../config/badges'
-
-// ── Utilitaires ───────────────────────────────────────────────────────────────
-const formatDateFr = (dateStr) => {
-  if (!dateStr) return null
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  }).format(new Date(dateStr))
-}
+import { formatDateFr } from '../../utils/dateUtils'
 
 // Transitions autorisées par statut
 const ALLOWED_TRANSITIONS = {

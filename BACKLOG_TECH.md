@@ -23,25 +23,25 @@
 
 ## 🟠 Haute priorité — Prochaine itération
 
-- [ ] **[H-1] Extraire `SheetPicker` en composant `src/components/ui/SheetPicker.jsx`**
+- [x] **[H-1] Extraire `SheetPicker` en composant `src/components/ui/SheetPicker.jsx`**
   Défini 2x : `ActionForm.jsx:54-90` + `InterventionForm.jsx:18-54`
 
-- [ ] **[H-2] Ajouter un `ErrorBoundary` au niveau des routes**
+- [x] **[H-2] Ajouter un `ErrorBoundary` au niveau des routes**
   Créer `src/components/ui/ErrorBoundary.jsx` + wrapper dans `src/router/routes.jsx`
   Sans ça : tout crash = écran blanc complet
 
-- [ ] **[H-3] Standardiser le format de retour des fonctions API**
+- [x] **[H-3] Standardiser le format de retour des fonctions API**
   `src/lib/api/client.js` + `src/api/*.js` — certaines normalisent `.items ?? res`, d'autres non
 
-- [ ] **[H-4] Extraire les formatters dans `src/utils/`**
+- [x] **[H-4] Extraire les formatters dans `src/utils/`**
   - Créer `src/utils/dateUtils.js` : `formatDateFr`, `formatWeekLabel`, `formatTime`, `isToday`, `getMonday`, `addDays`, `toDateStr`
-  - Nettoyer : `InterventionsScreen.tsx:17-60` + `InterventionRequestsPage.jsx:17-23`
+  - Nettoyé : `InterventionsPage.jsx`, `InterventionRequestsPage.jsx`, `InterventionDetailPage.jsx`, `ActionCard.jsx`, `PlanningPage.jsx`
 
 - [x] **[H-5] Décider screens/ vs pages/** *(décision d'architecture)*
   Migré : `InterventionsScreen.tsx` → `pages/interventions/InterventionsPage.jsx`, dossier `screens/` supprimé
 
-- [ ] **[H-6] Ajouter route 404**
-  `src/router/routes.jsx` → `<Route path="*" element={<NotFoundPage />} />`
+- [x] **[H-6] Ajouter route 404**
+  `src/router/routes.jsx` → route catch-all + `ErrorBoundary` sur toutes les routes
 
 - [ ] **[H-7] Constante pagination**
   `export const DEFAULT_PAGE_SIZE = 50` dans `src/config/api.js` — remplacer les `limit: 50` / `limit: 30` hardcodés
@@ -118,3 +118,4 @@
 |---|---|
 | 2026-04-12 | Audit initial — backlog créé |
 | 2026-04-12 | C-1/C-2/C-3 appliqués — section critique terminée |
+| 2026-04-12 | H-1/H-2/H-3/H-4/H-5/H-6 appliqués — section haute priorité terminée (sauf H-7) |

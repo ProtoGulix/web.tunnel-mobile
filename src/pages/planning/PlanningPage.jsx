@@ -4,40 +4,14 @@ import { usePlanningWeek } from '../../hooks/planning/usePlanningWeek'
 import { ActionCard } from './ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
+import { formatWeekLabel, formatTime, isToday } from '../../utils/dateUtils'
 
 const DAY_NAMES = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
 const MONTH_SHORT = ['jan.', 'fév.', 'mar.', 'avr.', 'mai', 'jun.', 'jul.', 'aoû.', 'sep.', 'oct.', 'nov.', 'déc.']
 
-function formatWeekLabel(weekStart) {
-  const end = new Date(weekStart)
-  end.setDate(weekStart.getDate() + 6)
-  const s = weekStart.getDate()
-  const e = end.getDate()
-  const em = MONTH_SHORT[end.getMonth()]
-  const ey = end.getFullYear()
-  if (weekStart.getMonth() === end.getMonth()) return `${s} – ${e} ${em} ${ey}`
-  return `${s} ${MONTH_SHORT[weekStart.getMonth()]} – ${e} ${em} ${ey}`
-}
-
 function formatDayHeader(date) {
   const dow = date.getDay()
   return `${DAY_NAMES[dow === 0 ? 6 : dow - 1]} ${date.getDate()} ${MONTH_SHORT[date.getMonth()]}`
-}
-
-function formatTime(hours) {
-  if (!hours) return null
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}min`
-  if (m === 0) return `${h}h00`
-  return `${h}h${String(m).padStart(2, '0')}`
-}
-
-function isToday(date) {
-  const now = new Date()
-  return date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
 }
 
 const COL_WIDTH = 172

@@ -2,7 +2,7 @@ import { client } from "../lib/api/client";
 
 export function getPurchaseRequests(params = {}) {
   const query = new URLSearchParams(params).toString();
-  return client.get(`/purchase-requests${query ? `?${query}` : ""}`);
+  return client.get(`/purchase-requests${query ? `?${query}` : ""}`).then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 
 export function createPurchaseRequest(data) {

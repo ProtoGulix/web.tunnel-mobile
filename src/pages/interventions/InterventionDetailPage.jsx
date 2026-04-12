@@ -8,15 +8,11 @@ import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
+import { formatDateFr } from '../../utils/dateUtils'
 
 function getInitials(name) {
   if (!name) return '?'
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function formatDateFr(dateStr) {
-  if (!dateStr) return ''
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(dateStr))
 }
 
 function DICard({ request }) {

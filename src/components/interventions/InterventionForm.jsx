@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Check, Loader2, FileText, ChevronDown, Wrench } from 'lucide-react'
+import { Check, Loader2, FileText, Wrench } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { SelectionChip } from '../ui/AsyncSearchSelect'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
+import { SheetPicker } from '../ui/SheetPicker'
 import { getInterventionTypes } from '../../api/planning'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -14,44 +15,6 @@ const PRIORITY_OPTIONS = [
   { value: 'important', label: 'Important' },
   { value: 'urgent',    label: 'Urgent' },
 ]
-
-function SheetPicker({ title, options, value, onChange, placeholder = 'Sélectionner...' }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => String(o.value) === String(value))
-  return (
-    <>
-      <button type="button" onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 bg-white text-left focus:outline-none">
-        <span className={`text-sm ${selected ? 'font-medium text-tunnel-text' : 'text-tunnel-muted'}`}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <ChevronDown size={14} className="text-tunnel-muted shrink-0" />
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-[70] flex flex-col justify-end" style={{ background: 'rgba(0,0,0,0.35)' }} onClick={() => setOpen(false)}>
-          <div className="bg-white rounded-t-2xl max-h-[72vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="px-4 pt-4 pb-3 border-b border-tunnel-border shrink-0 flex items-center justify-between">
-              <p className="text-sm font-semibold text-tunnel-text">{title}</p>
-              <button type="button" onClick={() => setOpen(false)} className="text-xs text-tunnel-muted font-medium px-2 py-1">Fermer</button>
-            </div>
-            <div className="overflow-y-auto">
-              {options.map(o => {
-                const active = String(o.value) === String(value)
-                return (
-                  <button key={o.value} type="button" onClick={() => { onChange(String(o.value)); setOpen(false) }}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 border-b border-tunnel-border text-left ${active ? 'bg-blue-50' : 'bg-white active:bg-tunnel-bg'}`}>
-                    <span className="text-sm text-tunnel-text">{o.label}</span>
-                    {active && <Check size={14} className="text-tunnel-accent shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
 
 /**
  * InterventionForm — formulaire fullscreen de création d'intervention.
@@ -160,6 +123,7 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
                 value={typeInter}
                 onChange={setTypeInter}
                 placeholder="Sélectionner…"
+                zIndex={70}
               />
             </div>
             <div className="flex-1">
@@ -172,6 +136,7 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
                 value={priority}
                 onChange={setPriority}
                 placeholder="Normale"
+                zIndex={70}
               />
             </div>
           </div>

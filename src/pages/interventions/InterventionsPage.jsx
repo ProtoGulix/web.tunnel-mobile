@@ -12,52 +12,7 @@ import { DIForm } from '../../components/interventions/DIForm'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { INTERVENTION_STATUSES, PRIORITIES, INTERVENTION_TYPES } from '../../config/badges'
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const MONTH_SHORT = ['jan.','fév.','mar.','avr.','mai','jun.','jul.','aoû.','sep.','oct.','nov.','déc.']
-const DAY_LABELS  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
-
-function getMonday(date) {
-  const d = new Date(date)
-  const day = d.getDay()
-  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function addDays(date, n) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + n)
-  return d
-}
-
-function toDateStr(date) {
-  return date.toISOString().slice(0, 10)
-}
-
-function formatWeekLabel(monday) {
-  const sunday = addDays(monday, 6)
-  const s = monday.getDate(), e = sunday.getDate()
-  const em = MONTH_SHORT[sunday.getMonth()], ey = sunday.getFullYear()
-  if (monday.getMonth() === sunday.getMonth()) return `${s} – ${e} ${em} ${ey}`
-  return `${s} ${MONTH_SHORT[monday.getMonth()]} – ${e} ${em} ${ey}`
-}
-
-function formatTime(hours) {
-  if (!hours) return '0min'
-  const h = Math.floor(hours), m = Math.round((hours - h) * 60)
-  if (h === 0) return `${m}min`
-  if (m === 0) return `${h}h00`
-  return `${h}h${String(m).padStart(2, '0')}`
-}
-
-function isToday(date) {
-  const now = new Date()
-  return date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-}
+import { DAY_LABELS, formatWeekLabel, formatTime, isToday } from '../../utils/dateUtils'
 
 // ── Helpers couleurs — depuis la source de vérité config/badges.js ───────────
 const statusColor   = (s) => INTERVENTION_STATUSES[s]?.color ?? '#616161'
