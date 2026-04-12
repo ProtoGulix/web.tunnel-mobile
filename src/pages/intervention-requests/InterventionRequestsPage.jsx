@@ -12,6 +12,7 @@ import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { useInterventionRequests } from '../../hooks/interventions/useInterventionRequests'
 import { useInterventionRequestDetail } from '../../hooks/interventions/useInterventionRequestDetail'
 import { transitionInterventionRequest, getIntervention } from '../../api/interventions'
+import { INTERVENTION_STATUSES } from '../../config/badges'
 
 // ── Utilitaires ───────────────────────────────────────────────────────────────
 const formatDateFr = (dateStr) => {
@@ -51,15 +52,6 @@ const StatusLogEntry = ({ entry, isLast }) => (
 )
 
 // ── Carte intervention liée ────────────────────────────────────────────────────
-const STATUS_COLOR = {
-  ouvert: '#1F3A5F', en_cours: '#ED6C02', en_attente: '#ED6C02',
-  attente_pieces: '#C62828', attente_prod: '#ED6C02', ferme: '#2E7D32', cancelled: '#616161',
-}
-const STATUS_LABEL = {
-  ouvert: 'Ouvert', en_cours: 'En cours', en_attente: 'En attente',
-  attente_pieces: 'Attente pièces', attente_prod: 'Attente prod', ferme: 'Fermé', cancelled: 'Annulé',
-}
-
 const LinkedIntervention = ({ interventionId, onNavigate }) => {
   const [inter, setInter] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -79,7 +71,8 @@ const LinkedIntervention = ({ interventionId, onNavigate }) => {
   )
   if (!inter) return null
 
-  const sc = STATUS_COLOR[inter.status_actual] ?? '#616161'
+  const sc = INTERVENTION_STATUSES[inter.status_actual]?.color ?? '#616161'
+  const sl = INTERVENTION_STATUSES[inter.status_actual]?.label ?? inter.status_actual
 
   return (
     <button
@@ -96,7 +89,7 @@ const LinkedIntervention = ({ interventionId, onNavigate }) => {
           </span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
             style={{ backgroundColor: sc + '18', color: sc }}>
-            {STATUS_LABEL[inter.status_actual] ?? inter.status_actual}
+            {sl}
           </span>
           {inter.type_inter && (
             <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"

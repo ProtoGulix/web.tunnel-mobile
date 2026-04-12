@@ -1,146 +1,120 @@
-# Backlog de dette technique — web.tunnel-mobile
+# TODO & Backlog — web.tunnel-mobile
 
-> Généré suite à l'audit complet du 2026-04-12.
-> Les items sont triés par priorité. Cocher au fur et à mesure.
-
----
-
-## 🔴 CRITIQUE — À corriger avant la prochaine feature
-
-### [C-1] Race condition : polling + mise à jour manuelle
-- **Fichier** : `src/hooks/interventions/useInterventionsList.js` (~ligne 94)
-- **Problème** : L'intervalle de 30s recharge les données et peut écraser les mises à jour locales en cours
-- **Fix** : Implémenter un `AbortController` par fetch + pauser le polling si un formulaire est ouvert
-- **Impact** : Données perdues pour l'utilisateur
-
-### [C-2] Null guards manquants sur données API
-- **Fichiers** :
-  - `src/components/interventions/DICard.jsx:47` → `item.description` sans guard
-  - `src/screens/InterventionsScreen.tsx:131-138` → `item.equipements` sans guard
-- **Fix** : Remplacer par `item?.description ?? '—'` et `item?.equipements ?? []`
-- **Impact** : Crash app sur données partielles
-
-### [C-3] Duplication des maps statut/couleur
-- **Fichiers concernés** :
-  - `src/config/badges.js` ← source de vérité (à garder)
-  - `src/screens/InterventionsScreen.tsx:62-93` ← DUPLIQUER à supprimer
-  - `src/pages/intervention-requests/InterventionRequestsPage.jsx:54-61` ← `STATUS_COLOR` / `STATUS_LABEL` à supprimer
-- **Fix** : Importer depuis `config/badges.js` partout, supprimer les définitions locales
-- **Impact** : Incohérences visuelles, maintenance impossible
+> Mis à jour le 2026-04-12. Cocher les cases au fur et à mesure.
+> **Légende** : 🔴 Critique · 🟠 Haute · 🟡 Moyen · 🟢 Polish · 💡 Feature
 
 ---
 
-## 🟠 HAUTE PRIORITÉ — Prochaine itération
+## 🔴 Critique — À traiter en priorité absolue
 
-### [H-1] Extraire `SheetPicker` en composant réutilisable
-- **Fichiers** :
-  - `src/components/actions/ActionForm.jsx` (défini localement ~ligne 54-90)
-  - `src/components/interventions/InterventionForm.jsx` (redéfini localement ~ligne 18-54)
-- **Fix** : Créer `src/components/ui/SheetPicker.jsx` et l'importer dans les deux
+- [x] **[C-1] Race condition polling + édition manuelle**
+  `src/hooks/interventions/useInterventionsList.js:94`
+  Polling 30s peut écraser une mise à jour en cours → `AbortController` + pause polling si formulaire ouvert
 
-### [H-2] Ajouter un Error Boundary au niveau des routes
-- **Fichier** : `src/router/routes.jsx`
-- **Fix** : Créer `src/components/ui/ErrorBoundary.jsx` (class component) et wrapper les routes principales
-- **Impact** : Sans ça, tout crash = écran blanc
+- [x] **[C-2] Null guards manquants sur données API**
+  - `src/components/interventions/DICard.jsx:47` → `item?.description ?? '—'`
+  - `src/screens/InterventionsScreen.tsx:131-138` → `item?.equipements ?? []`
 
-### [H-3] Standardiser le format de réponse API
-- **Fichier** : `src/lib/api/client.js` + tous les fichiers `src/api/*.js`
-- **Problème** : Certaines fonctions font `.then(res => res.items ?? res)`, d'autres non
-- **Fix** : Normaliser dans le client OU documenter clairement ce que retourne chaque endpoint
-
-### [H-4] Extraire les formatters dans `src/utils/`
-- **Fichiers à créer** :
-  - `src/utils/dateUtils.js` : `formatDateFr`, `formatWeekLabel`, `formatTime`, `isToday`, `getMonday`, `addDays`, `toDateStr`
-  - `src/utils/formatters.js` : autres helpers de formatage
-- **Fichiers à nettoyer** :
-  - `src/screens/InterventionsScreen.tsx:17-60` (définitions inline)
-  - `src/pages/intervention-requests/InterventionRequestsPage.jsx:17-23` (`formatDateFr` inline)
-
-### [H-5] Clarifier la relation `screens/` vs `pages/`
-- **Problème** : `src/screens/InterventionsScreen.tsx` est un fichier TypeScript seul dans un projet JSX
-- **Options** :
-  - Option A : Migrer `InterventionsScreen.tsx` → `src/pages/interventions/InterventionsPage.jsx`
-  - Option B : Documenter la distinction dans CLAUDE.md et s'y tenir
-- **Décision** : À prendre avec le dev
-
-### [H-6] Ajouter une route 404
-- **Fichier** : `src/router/routes.jsx`
-- **Fix** : Ajouter `<Route path="*" element={<NotFoundPage />} />` en bas des routes
-
-### [H-7] Constante pour les limites de pagination
-- **Fichier** : `src/lib/api/client.js` ou `src/config/api.js`
-- **Fix** : `export const DEFAULT_PAGE_SIZE = 50` — remplacer tous les `limit: 50` et `limit: 30` hardcodés
+- [x] **[C-3] Dupliquer les maps statut/couleur** — source unique dans `config/badges.js`
+  - Supprimer `STATUS_COLOR` / `STATUS_LABEL` dans `InterventionRequestsPage.jsx:54-61`
+  - Supprimer les maps dans `InterventionsScreen.tsx:62-93`
 
 ---
 
-## 🟡 MOYEN — Dette à résorber progressivement
+## 🟠 Haute priorité — Prochaine itération
 
-### [M-1] `ActionCard` mal placé
-- **Fichier** : `src/pages/planning/ActionCard.jsx`
-- **Fix** : Déplacer vers `src/components/interventions/ActionCard.jsx` (c'est un composant réutilisable)
+- [ ] **[H-1] Extraire `SheetPicker` en composant `src/components/ui/SheetPicker.jsx`**
+  Défini 2x : `ActionForm.jsx:54-90` + `InterventionForm.jsx:18-54`
 
-### [M-2] Pattern badge couleur manuel — remplacer par `<DynBadge>`
-- **Occurrences** : 8+ dans le projet
-- **Pattern à supprimer** : `style={{ backgroundColor: color + '22', color }}`
-- **Fix** : Utiliser `<DynBadge color={color}>` systématiquement
+- [ ] **[H-2] Ajouter un `ErrorBoundary` au niveau des routes**
+  Créer `src/components/ui/ErrorBoundary.jsx` + wrapper dans `src/router/routes.jsx`
+  Sans ça : tout crash = écran blanc complet
 
-### [M-3] Overlay modal inline — extraire en classe CSS
-- **Occurrences** : 3+ fichiers avec `style={{ background: 'rgba(0,0,0,0.35)' }}`
-- **Fix** : Créer classe utilitaire `.modal-overlay` dans `index.css`
+- [ ] **[H-3] Standardiser le format de retour des fonctions API**
+  `src/lib/api/client.js` + `src/api/*.js` — certaines normalisent `.items ?? res`, d'autres non
 
-### [M-4] Couleurs hex hardcodées → tokens Tailwind
-- **Fichier** : `src/components/ui/BottomNav.jsx:16-17` (`#2E2E2E` hardcodé)
-- Et 20+ autres occurrences projet-wide
-- **Fix** : Remplacer par `text-tunnel-blue`, `bg-tunnel-sidebar`, etc.
+- [ ] **[H-4] Extraire les formatters dans `src/utils/`**
+  - Créer `src/utils/dateUtils.js` : `formatDateFr`, `formatWeekLabel`, `formatTime`, `isToday`, `getMonday`, `addDays`, `toDateStr`
+  - Nettoyer : `InterventionsScreen.tsx:17-60` + `InterventionRequestsPage.jsx:17-23`
 
-### [M-5] React.memo sur les composants de liste
-- **Fichiers** : `DICard.jsx`, `InterventionCard.jsx` (si existe), composants de ligne stock
-- **Fix** : `export default React.memo(DICard)`
-- **Impact** : Performance sur les longues listes
+- [ ] **[H-5] Décider screens/ vs pages/** *(décision d'architecture)*
+  `InterventionsScreen.tsx` est le seul fichier TypeScript — migrer vers `pages/interventions/` ou documenter la distinction
 
-### [M-6] Lazy loading des routes
-- **Fichier** : `src/router/routes.jsx`
-- **Fix** : `const StockPage = lazy(() => import('../pages/stock/StockPage'))` + `<Suspense>`
-- **Impact** : Réduction du bundle initial
+- [ ] **[H-6] Ajouter route 404**
+  `src/router/routes.jsx` → `<Route path="*" element={<NotFoundPage />} />`
 
-### [M-7] Paramètre route `:id` vs noms custom
-- **Fichier** : `src/router/routes.jsx:48`
-- **Problème** : `/:itemId` au lieu de `/:id` — incohérent avec les autres routes
-- **Fix** : Harmoniser sur `:id` dans tout le router
-
-### [M-8] BOTTOM_NAV_ITEMS config inutilisée
-- **Fichier** : `src/config/navigation.js:42-48`
-- **Problème** : `BottomNav.jsx` hardcode ses items au lieu d'importer la config
-- **Fix** : Soit utiliser la config dans `BottomNav`, soit supprimer la config
+- [ ] **[H-7] Constante pagination**
+  `export const DEFAULT_PAGE_SIZE = 50` dans `src/config/api.js` — remplacer les `limit: 50` / `limit: 30` hardcodés
 
 ---
 
-## 🟢 POLISH — Quand le reste est stable
+## 🟡 Moyen — Dette à résorber progressivement
 
-### [P-1] Accessibilité : ARIA labels
-- Ajouter `aria-label` sur les boutons icon-only (`<button><X /></button>`)
-- Remplacer les `<div onClick>` par de vrais `<button>`
+- [ ] **[M-1] Déplacer `ActionCard` vers `src/components/interventions/`**
+  Actuellement dans `src/pages/planning/ActionCard.jsx` — c'est un composant réutilisable
 
-### [P-2] Validation de formulaire côté client
-- `src/components/actions/ActionForm.jsx` a une `validate()` partielle
-- Compléter et harmoniser avec les autres formulaires
+- [ ] **[M-2] Remplacer les badges couleur manuels par `<DynBadge>`**
+  8+ occurrences du pattern `style={{ backgroundColor: color + '22', color }}`
 
-### [P-3] Support offline PWA
-- `vite-plugin-pwa` configuré mais pas de page offline
-- Ajouter `offline.html` et stratégie de cache dans `vite.config.js`
+- [ ] **[M-3] Overlay modal inline → classe CSS**
+  3+ occurrences de `style={{ background: 'rgba(0,0,0,0.35)' }}` → `.modal-overlay` dans `index.css`
 
-### [P-4] Optimisation images
-- `Tunnel_Logo.png` chargé sans optimisation
-- Convertir en WebP + attribut `loading="lazy"`
+- [ ] **[M-4] Remplacer les hex hardcodés par les tokens Tailwind**
+  `BottomNav.jsx:16-17` + 20+ occurrences → `text-tunnel-blue`, `bg-tunnel-sidebar`, etc.
 
-### [P-5] Typographie — supprimer les tailles arbitraires
-- Supprimer `text-[11px]`, `text-[17.6px]`, etc.
-- Utiliser uniquement les classes custom du design system
+- [ ] **[M-5] `React.memo` sur les composants de liste**
+  `DICard.jsx`, `InterventionCard.jsx`, composants de ligne stock
+
+- [ ] **[M-6] Lazy loading des routes**
+  `const StockPage = lazy(() => import(...))` + `<Suspense>` dans `routes.jsx`
+
+- [ ] **[M-7] Uniformiser le paramètre `:id` dans les routes**
+  `/:itemId` → `/:id` dans `routes.jsx:48` pour cohérence
+
+- [ ] **[M-8] `BOTTOM_NAV_ITEMS` config inutilisée**
+  `src/config/navigation.js:42-48` — soit utiliser dans `BottomNav.jsx`, soit supprimer
 
 ---
 
-## Suivi des décisions
+## 🟢 Polish — Quand la dette est résorbée
+
+- [ ] **[P-1] Accessibilité : ARIA labels**
+  Boutons icon-only sans label, `<div onClick>` à remplacer par `<button>`
+
+- [ ] **[P-2] Validation formulaire côté client**
+  `ActionForm.jsx` a une `validate()` partielle — compléter et harmoniser sur tous les forms
+
+- [ ] **[P-3] Support offline PWA**
+  `vite-plugin-pwa` configuré mais pas de page offline — ajouter `offline.html` + stratégie cache
+
+- [ ] **[P-4] Optimiser les images**
+  `Tunnel_Logo.png` → WebP + `loading="lazy"`
+
+- [ ] **[P-5] Nettoyer les tailles typo arbitraires**
+  Supprimer `text-[11px]`, `text-[17.6px]` → classes custom du design system
+
+---
+
+## 💡 Features à venir
+
+> Aide-mémoire des prochaines fonctionnalités. Ajouter ici au fil des idées.
+
+- [ ] ...
+- [ ] ...
+
+---
+
+## ✅ Terminé
+
+| Date | Item | Notes |
+|---|---|---|
+| 2026-04-12 | Audit initial + création CLAUDE.md | — |
+
+---
+
+## 📋 Décisions prises
 
 | Date | Décision |
 |---|---|
 | 2026-04-12 | Audit initial — backlog créé |
+| 2026-04-12 | C-1/C-2/C-3 appliqués — section critique terminée |

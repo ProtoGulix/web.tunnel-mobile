@@ -11,6 +11,7 @@ import { DIList } from '../components/interventions/DIList'
 import { DIForm } from '../components/interventions/DIForm'
 import { PageHeader } from '../components/ui/PageHeader'
 import { BottomBar, BottomBtn } from '../components/ui/BottomBar'
+import { INTERVENTION_STATUSES, PRIORITIES, INTERVENTION_TYPES } from '../config/badges'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -58,39 +59,12 @@ function isToday(date: Date): boolean {
     date.getDate() === now.getDate()
 }
 
-// ── Constantes couleurs — issues de la doc interventions.md ──────────────────
-const STATUS_COLOR: Record<string, string> = {
-  ouvert:         '#1F3A5F',
-  en_cours:       '#ED6C02',
-  en_attente:     '#ED6C02',
-  attente_pieces: '#C62828',
-  attente_prod:   '#ED6C02',
-  ferme:          '#2E7D32',
-  cancelled:      '#616161',
-}
-const STATUS_LABEL: Record<string, string> = {
-  ouvert:         'Ouvert',
-  en_cours:       'En cours',
-  en_attente:     'En attente',
-  attente_pieces: 'Attente pièces',
-  attente_prod:   'Attente prod',
-  ferme:          'Fermé',
-  cancelled:      'Annulé',
-}
-const PRIORITY_COLOR: Record<string, string> = {
-  urgent:    '#C62828',
-  important: '#ED6C02',
-  normale:   '#1F3A5F',
-  faible:    '#616161',
-}
-const PRIORITY_LABEL: Record<string, string> = {
-  urgent: 'Urgent', important: 'Important', normale: 'Normale', faible: 'Faible',
-}
-// type_inter : valeurs issues de GET /interventions/types
-const TYPE_COLOR: Record<string, string> = {
-  CUR: '#ED6C02', PRE: '#1F3A5F', REA: '#2E7D32', BAT: '#616161',
-  PRO: '#1F3A5F', COF: '#616161', PIL: '#7B1FA2', MES: '#0288D1',
-}
+// ── Helpers couleurs — depuis la source de vérité config/badges.js ───────────
+const statusColor  = (s: string) => INTERVENTION_STATUSES[s]?.color  ?? '#616161'
+const statusLabel  = (s: string) => INTERVENTION_STATUSES[s]?.label  ?? s
+const priorityColor = (p: string) => PRIORITIES[p]?.color ?? '#616161'
+const priorityLabel = (p: string) => PRIORITIES[p]?.label ?? p
+const typeColor     = (t: string) => INTERVENTION_TYPES[t]?.color    ?? '#616161'
 
 // ── Badge âge conditionnel ────────────────────────────────────────────────────
 function AgeBadge({ reported_date, priority }: { reported_date: string; priority: string }) {
@@ -105,9 +79,9 @@ function AgeBadge({ reported_date, priority }: { reported_date: string; priority
 // ── Carte intervention ────────────────────────────────────────────────────────
 function InterventionCard({ item }: { item: any }) {
   const navigate = useNavigate()
-  const borderColor = item.printed_fiche ? '#BDBDBD' : (PRIORITY_COLOR[item.priority] ?? '#BDBDBD')
-  const typeColor   = TYPE_COLOR[item.type_inter] ?? '#616161'
-  const statusColor = STATUS_COLOR[item.status_actual] ?? '#616161'
+  const borderColor  = item.printed_fiche ? '#BDBDBD' : (priorityColor(item.priority) ?? '#BDBDBD')
+  const tc           = typeColor(item.type_inter)
+  const sc           = statusColor(item.status_actual)
 
   return (
     <button
@@ -128,13 +102,13 @@ function InterventionCard({ item }: { item: any }) {
             style={{ backgroundColor: '#1F3A5F18', color: '#1F3A5F' }}>
             {item.code}
           </span>
-          {item.equipements && (
+          {item.equipements?.code && (
             <>
               <span className="font-mono text-[11px] px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: '#61616118', color: '#616161' }}>
                 {item.equipements.code}
               </span>
-              <span className="text-[11px] text-[#616161] truncate">{item.equipements.name}</span>
+              <span className="text-[11px] text-[#616161] truncate">{item.equipements.name ?? ''}</span>
             </>
           )}
         </div>
@@ -151,7 +125,7 @@ function InterventionCard({ item }: { item: any }) {
             )}
             {item.type_inter && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                style={{ backgroundColor: typeColor + '22', color: typeColor }}>
+                style={{ backgroundColor: tc + '22', color: tc }}>
                 {item.type_inter}
               </span>
             )}
@@ -162,14 +136,14 @@ function InterventionCard({ item }: { item: any }) {
         <div className="flex items-center gap-2 flex-wrap">
           {item.priority && (
             <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-              style={{ backgroundColor: (PRIORITY_COLOR[item.priority] ?? '#616161') + '22', color: PRIORITY_COLOR[item.priority] ?? '#616161' }}>
-              {PRIORITY_LABEL[item.priority] ?? item.priority}
+              style={{ backgroundColor: priorityColor(item.priority) + '22', color: priorityColor(item.priority) }}>
+              {priorityLabel(item.priority)}
             </span>
           )}
           {item.status_actual && (
             <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-              style={{ backgroundColor: statusColor + '18', color: statusColor }}>
-              {STATUS_LABEL[item.status_actual] ?? item.status_actual}
+              style={{ backgroundColor: sc + '18', color: sc }}>
+              {statusLabel(item.status_actual)}
             </span>
           )}
           {item.tech_initials && (

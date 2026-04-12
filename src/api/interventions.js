@@ -27,9 +27,9 @@ export function getIntervention(id) {
   return client.get(`/interventions/${id}`);
 }
 
-export function searchInterventions(params = {}) {
+export function searchInterventions(params = {}, options = {}) {
   const query = new URLSearchParams({ limit: 50, ...params }).toString();
-  return client.get(`/interventions?${query}`).then((res) => res.items ?? res);
+  return client.get(`/interventions?${query}`, options).then((res) => res.items ?? res);
 }
 
 export function getInterventionActions(interventionId) {
