@@ -59,18 +59,18 @@ src/
 
 ### Composants à utiliser (ne pas recréer)
 
-| Besoin | Composant |
-|---|---|
-| Badge coloré | `<DynBadge color={hex}>` |
-| Badge statut intervention | `<StatusBadge status={...}>` |
-| Badge priorité | `<PriorityBadge priority={...}>` |
-| Ligne de liste | `<ListRow>` |
-| Sélecteur async | `<AsyncSearchSelect>` |
-| États liste | `<ListStatus loading error empty>` |
-| Barre action bas | `<BottomBar>` + `<BottomBtn>` |
-| En-tête page | `<PageHeader title onBack action>` |
-| Ligne infos détail | `<InfoRow icon label value>` |
-| Titre section | `<SectionTitle>` |
+| Besoin                    | Composant                          |
+| ------------------------- | ---------------------------------- |
+| Badge coloré              | `<DynBadge color={hex}>`           |
+| Badge statut intervention | `<StatusBadge status={...}>`       |
+| Badge priorité            | `<PriorityBadge priority={...}>`   |
+| Ligne de liste            | `<ListRow>`                        |
+| Sélecteur async           | `<AsyncSearchSelect>`              |
+| États liste               | `<ListStatus loading error empty>` |
+| Barre action bas          | `<BottomBar>` + `<BottomBtn>`      |
+| En-tête page              | `<PageHeader title onBack action>` |
+| Ligne infos détail        | `<InfoRow icon label value>`       |
+| Titre section             | `<SectionTitle>`                   |
 
 ### Pattern couleur dynamique — À NE PAS RÉINVENTER
 
@@ -148,10 +148,10 @@ Success:        #2E7D32
 Tous les hooks de data fetching retournent un **objet nommé** (pas un tableau) :
 
 ```js
-return { items, loading, error, reload }         // liste
-return { item, loading, error, reload }          // détail
-return { query, setQuery, results, loading }     // recherche
-return { submit, status, error }                 // mutation
+return { items, loading, error, reload }; // liste
+return { item, loading, error, reload }; // détail
+return { query, setQuery, results, loading }; // recherche
+return { submit, status, error }; // mutation
 ```
 
 ### Règles
@@ -167,12 +167,14 @@ return { submit, status, error }                 // mutation
 ### Format de réponse
 
 Le client normalise les réponses. Les fonctions API retournent soit :
+
 - **Un tableau** : `[...items]`
 - **Un objet** : `{ items: [...], facets: [...], total: ... }`
 
 Toujours gérer les deux cas côté hook :
+
 ```js
-const items = Array.isArray(res) ? res : (res.items ?? [])
+const items = Array.isArray(res) ? res : (res.items ?? []);
 ```
 
 ### Paramètres
@@ -185,13 +187,13 @@ const items = Array.isArray(res) ? res : (res.items ?? [])
 ```js
 // Pattern standard dans les hooks
 try {
-  const data = await myApiCall(params)
-  setItems(data)
+  const data = await myApiCall(params);
+  setItems(data);
 } catch (err) {
-  const msg = err?.data?.detail ?? err?.message ?? 'Erreur inconnue'
-  setError(msg)
+  const msg = err?.data?.detail ?? err?.message ?? "Erreur inconnue";
+  setError(msg);
 } finally {
-  setLoading(false)
+  setLoading(false);
 }
 ```
 
@@ -210,10 +212,10 @@ try {
 
 ```jsx
 // Dans la page, détection de l'ID par useParams
-const { id } = useParams()
+const { id } = useParams();
 
-if (id) return <DetailView id={id} onBack={() => navigate('/ma-route')} />
-return <ListView onSelect={id => navigate(`/ma-route/${id}`)} />
+if (id) return <DetailView id={id} onBack={() => navigate("/ma-route")} />;
+return <ListView onSelect={(id) => navigate(`/ma-route/${id}`)} />;
 ```
 
 ---
@@ -264,6 +266,7 @@ className="text-[#1F3A5F]"
 ### Page liste + détail (pattern établi)
 
 Voir [InterventionRequestsPage.jsx](src/pages/intervention-requests/InterventionRequestsPage.jsx) — implémentation de référence :
+
 - Routage liste/détail par `useParams`
 - Filtres par `useSearchParams`
 - `<BottomBar>` + `<BottomBtn>` pour les actions
@@ -274,6 +277,114 @@ Voir [InterventionRequestsPage.jsx](src/pages/intervention-requests/Intervention
 
 Voir [useInterventionRequests.js](src/hooks/interventions/useInterventionRequests.js) — structure de référence.
 
-### Formulaire en plein écran (pattern établi)
+### Formulaire plein écran (pattern établi)
 
-Voir [DIForm.jsx](src/components/interventions/DIForm.jsx) — structure de référence.
+Il existe **deux variantes** selon le mode d'affichage, mais la **structure interne est identique**.
+
+#### Variante A — Remplacement de vue (`flex flex-col h-full`)
+
+Utilisé quand le formulaire **remplace** la vue courante (retour conditionnel dans la page).
+
+```jsx
+// Dans la page :
+if (showForm) return (
+  <MyForm onSubmit={handleCreate} onClose={() => setShowForm(false)} status={...} error={...} />
+)
+```
+
+#### Variante B — Overlay flottant (`fixed inset-x-0 top-0 z-[55]`)
+
+Utilisé quand le formulaire **se superpose** à la vue courante (modal plein écran).
+
+```jsx
+// Dans la page :
+{showForm && (
+  <MyForm onSubmit={handleCreate} onClose={() => setShowForm(false)} ... />
+)}
+```
+
+#### Structure interne commune (obligatoire pour les deux variantes)
+
+```jsx
+// Constantes de style — TOUJOURS en haut du fichier
+const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
+const labelCls = 'flex items-center gap-1.5 mb-1.5'  // ← PAS uppercase, PAS muted
+
+export function MyForm({ onSubmit, onClose, status, error }) {
+  const [form, setForm] = useState({ ... })
+  const dirty = !!(form.field1 || form.field2)
+  const { guardedClose, ConfirmDialog } = useFormGuard({ dirty, onClose })
+
+  return (
+    // Variante A :
+    <div className="flex flex-col h-full bg-white">
+    // Variante B :
+    // <div className="fixed inset-x-0 top-0 z-[55] flex flex-col bg-white" style={{ bottom: 'var(--bottom-nav-height)' }}>
+
+      {/* Header — icon + titre + bouton X */}
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-tunnel-border bg-blue-50 shrink-0">
+        <div className="w-7 h-7 rounded-full bg-tunnel-accent/10 flex items-center justify-center shrink-0">
+          <IconRelevant size={15} className="text-tunnel-accent" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-bold text-tunnel-text">Titre du formulaire</h2>
+        </div>
+        <button type="button" onClick={guardedClose} className="p-1.5 text-tunnel-muted">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Corps scrollable — ID sur le form pour le bouton submit externalisé */}
+      <form id="my-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-5">
+
+          {/* Erreur */}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-xs text-red-700">• {error}</p>
+            </div>
+          )}
+
+          {/* Champ type — label avec icône + texte bold */}
+          <div>
+            <div className={labelCls}>
+              <SomeIcon size={14} className="text-tunnel-muted" />
+              <span className="text-xs font-bold text-tunnel-text">Libellé *</span>
+            </div>
+            <input className={inputCls} ... />
+          </div>
+
+        </div>
+      </form>
+
+      {/* Footer — toujours BottomBar + BottomBtn */}
+      <BottomBar safeBottom={false}>
+        <BottomBtn variant="secondary" type="button" onClick={guardedClose}>Annuler</BottomBtn>
+        <BottomBtn variant="primary" type="submit" form="my-form"
+          disabled={status === 'loading'} loading={status === 'loading'}
+          icon={<Check size={14} />}>
+          Créer
+        </BottomBtn>
+      </BottomBar>
+
+      <ConfirmDialog />
+    </div>
+  )
+}
+```
+
+#### Règles du pattern formulaire
+
+- **Prop de fermeture** : toujours `onClose` (pas `onCancel`)
+- **Labels** : `flex items-center gap-1.5 mb-1.5` + icône + `text-xs font-bold text-tunnel-text` — **jamais** `uppercase tracking-wide text-tunnel-muted`
+- **Erreur** : `bg-red-50 border border-red-200` — **jamais** `border-red-100`
+- **Boutons** : `BottomBar` + `BottomBtn` — **jamais** de boutons inline en bas du formulaire
+- **Form ID** : `id="xxx-form"` sur le `<form>` et `form="xxx-form"` sur le `BottomBtn` submit
+- **Guard** : toujours `useFormGuard` si le formulaire a des champs modifiables
+- **SheetPicker** : utiliser `src/components/ui/SheetPicker.jsx` — **jamais** redéfinir localement
+
+#### Références
+
+- [DIForm.jsx](src/components/interventions/DIForm.jsx) — variante B (overlay)
+- [PurchaseRequestForm.jsx](src/components/purchases/PurchaseRequestForm.jsx) — variante B (overlay)
+- [ActionForm.jsx](src/components/actions/ActionForm.jsx) — variante A (`mode='page'`) + variante B (`mode='modal'`)

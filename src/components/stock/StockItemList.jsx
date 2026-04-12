@@ -16,7 +16,7 @@ export function StockItemList({ items, loading, error, search, onSearchChange, s
         <FilterChips
           chips={facets.families.map(f => ({ key: f.code, label: f.label, count: f.count }))}
           active={familyCode || null}
-          onChange={key => { onFamilyChange(key ?? ''); onSubFamilyChange('') }}
+          onChange={key => onFamilyChange(key ?? '')}
         />
       )}
 

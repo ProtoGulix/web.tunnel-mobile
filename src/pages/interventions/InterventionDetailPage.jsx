@@ -47,8 +47,8 @@ function DICard({ request }) {
           {getInitials(request.demandeur_nom)}
         </span>
         <span className="text-xs text-tunnel-muted">—</span>
-        {request.demandeur_service && (
-          <span className="text-xs text-tunnel-muted">{request.demandeur_service}</span>
+        {(request.service?.label ?? request.demandeur_service) && (
+          <span className="text-xs text-tunnel-muted">{request.service?.label ?? request.demandeur_service}</span>
         )}
         {request.description && (
           <span className="text-xs text-tunnel-text truncate flex-1 min-w-0">{request.description}</span>
