@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.4.0] — 12 avril 2026
+
+Unification des formulaires plein écran, composant `BottomBar`, sélecteur de service pour les demandes d'intervention, et normalisation de l'UI.
+
+---
+
+### Demandes d'intervention
+
+- **Champ service** : `demandeur_service` (texte libre) remplacé par `service_id` (sélecteur via `GET /services`) dans `DIForm` et `DIInlineForm` (ActionForm)
+- **`DIForm`** : refonte complète aux normes du pattern formulaire plein écran — overlay `fixed`, header avec icône, labels bold avec icône, `BottomBar` + `BottomBtn`, `useFormGuard`
+- Affichage rétrocompatible : `service?.label ?? demandeur_service` dans `DICard`, `InterventionDetailPage`, `InterventionRequestsPage`
+
+### Composants UI
+
+- **`BottomBar` + `BottomBtn`** (`src/components/ui/BottomBar.jsx`) : barre d'action fixe en bas d'écran, 3 variantes (primary / secondary / danger), spinner intégré
+- **`SheetPicker`** (`src/components/ui/SheetPicker.jsx`) : sélecteur générique via bottom-sheet réutilisable
+- **`ListStatus`** (`src/components/ui/ListStatus.jsx`) : gestion unifiée des états loading / error / empty dans les listes
+- **`ErrorBoundary`** : composant de garde d'erreur React
+
+### Équipements
+
+- Affichage du badge `statut` (couleur dynamique) dans la carte et la fiche détail
+- Champ `parent` affiché dans le détail équipement
+
+### Standards & architecture
+
+- `CLAUDE.md` : documentation complète du pattern formulaire plein écran (variante A remplacement / variante B overlay), règles de labels, `BottomBar`, `useFormGuard`
+- `BottomBar` adopté sur tous les formulaires et vues liste (`InterventionsScreen`, `StockPage`, `InterventionRequestsPage`)
+- `PurchaseRequestForm` et `StockPage` enrichis (filtres famille/sous-famille, gestion paginée)
+
+---
+
 ## [1.3.0] — 10 avril 2026
 
 Ajout du module Équipements (liste, détail, recherche), refonte visuelle de la page d'accueil et de connexion, amélioration de la recherche dans la liste des interventions.
