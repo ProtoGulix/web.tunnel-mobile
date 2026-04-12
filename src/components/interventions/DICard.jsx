@@ -44,7 +44,7 @@ export function DICard({ item, onSelect }) {
         </div>
 
         {/* Ligne 2 — description */}
-        <p className="text-sm font-medium text-[#2E2E2E] leading-snug line-clamp-2">{item.description}</p>
+        <p className="text-sm font-medium text-[#2E2E2E] leading-snug line-clamp-2">{item.description ?? '—'}</p>
 
         {/* Ligne 3 — équipement + demandeur */}
         <div className="flex items-center gap-2 flex-wrap">
