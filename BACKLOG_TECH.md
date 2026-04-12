@@ -37,8 +37,8 @@
   - Créer `src/utils/dateUtils.js` : `formatDateFr`, `formatWeekLabel`, `formatTime`, `isToday`, `getMonday`, `addDays`, `toDateStr`
   - Nettoyer : `InterventionsScreen.tsx:17-60` + `InterventionRequestsPage.jsx:17-23`
 
-- [ ] **[H-5] Décider screens/ vs pages/** *(décision d'architecture)*
-  `InterventionsScreen.tsx` est le seul fichier TypeScript — migrer vers `pages/interventions/` ou documenter la distinction
+- [x] **[H-5] Décider screens/ vs pages/** *(décision d'architecture)*
+  Migré : `InterventionsScreen.tsx` → `pages/interventions/InterventionsPage.jsx`, dossier `screens/` supprimé
 
 - [ ] **[H-6] Ajouter route 404**
   `src/router/routes.jsx` → `<Route path="*" element={<NotFoundPage />} />`
