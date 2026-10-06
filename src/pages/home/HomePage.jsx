@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Wrench, Package, Cpu, QrCode } from 'lucide-react'
+import { MyTasksSection } from '../../components/home/MyTasksSection'
 
 const SHORTCUTS = [
   { label: 'Interventions', route: '/interventions', icon: Wrench,   color: '#1F3A5F' },
@@ -21,6 +22,8 @@ export default function HomePage() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4">
+        <MyTasksSection />
+
         <p className="text-xs font-medium text-[#616161] uppercase tracking-wide mb-3">Accès rapide</p>
         <div className="grid grid-cols-2 gap-3">
           {SHORTCUTS.map(({ label, route, icon: Icon, color }) => (

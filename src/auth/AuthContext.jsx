@@ -16,9 +16,11 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const data = await apiLogin(email, password)
-    // Stocker le access_token pour les requêtes suivantes
-    if (data?.data?.access_token) {
-      localStorage.setItem('auth_token', data.data.access_token)
+    // POST /auth/login retourne { access_token, refresh_token } à plat
+    // (pas enveloppé dans { data } comme les autres endpoints) — stocker
+    // le access_token pour les requêtes suivantes.
+    if (data?.access_token) {
+      localStorage.setItem('auth_token', data.access_token)
     }
     // Charger le profil utilisateur immédiatement après login
     const me = await getMe()

@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
-import { X, ChevronLeft, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, FileText, Hammer, Lock } from 'lucide-react'
+import { X, ChevronLeft, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, FileText, Hammer, Lock, CheckSquare } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
+import { TaskStatusBadge } from '../ui/TaskStatusBadge'
 import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
 import { getEquipements, getServices } from '../../api/interventions'
 import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
+import { getOpenTasksByIntervention, createTask } from '../../api/tasks'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -180,6 +182,116 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
   )
 }
 
+// ─── Section Tâche (lien obligatoire action↔tâche) ────────────────────────────
+function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCloseTaskChange }) {
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newLabel, setNewLabel] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    setTasks([])
+    onSelect(null)
+    if (!interventionId) return
+    setLoading(true)
+    getOpenTasksByIntervention(interventionId)
+      .then(setTasks)
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interventionId])
+
+  async function handleCreate() {
+    if (!newLabel.trim()) return
+    setCreating(true)
+    setError(null)
+    try {
+      const task = await createTask({ interventionId, label: newLabel.trim() })
+      setTasks(prev => [...prev, task])
+      onSelect(task.id)
+      setNewLabel('')
+      setShowCreate(false)
+    } catch (err) {
+      setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la création')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className={labelCls}>
+        <CheckSquare size={14} className="text-tunnel-muted" />
+        <span className="text-xs font-bold text-tunnel-text">Tâche</span>
+        <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">Obligatoire</span>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-tunnel-muted">
+          <Loader2 size={14} className="animate-spin" /> Chargement...
+        </div>
+      ) : tasks.length > 0 ? (
+        <div className="rounded-lg border border-tunnel-border overflow-hidden">
+          {tasks.map((task, i) => (
+            <button key={task.id} type="button" onClick={() => onSelect(task.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-left active:bg-tunnel-bg ${i > 0 ? 'border-t border-tunnel-border' : ''} ${selectedTaskId === task.id ? 'bg-blue-50' : ''}`}>
+              <span className="flex-1 text-sm text-tunnel-text line-clamp-1">{task.label}</span>
+              <TaskStatusBadge status={task.status} />
+              {selectedTaskId === task.id && <Check size={14} className="text-tunnel-accent shrink-0" />}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-tunnel-muted px-3 py-2.5 rounded-lg border border-dashed border-tunnel-border bg-tunnel-bg">
+          Aucune tâche ouverte sur cette intervention
+        </p>
+      )}
+
+      {selectedTaskId && (
+        <label className="flex items-center gap-2 mt-2 px-1">
+          <input
+            type="checkbox"
+            checked={closeTask}
+            onChange={e => onCloseTaskChange(e.target.checked)}
+            className="w-4 h-4 accent-tunnel-accent"
+          />
+          <span className="text-xs text-tunnel-text">Cette action termine la tâche</span>
+        </label>
+      )}
+
+      {error && <p className="text-xs text-red-700 mt-2">{error}</p>}
+
+      {showCreate ? (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            className={inputCls}
+            value={newLabel}
+            onChange={e => setNewLabel(e.target.value)}
+            placeholder="Libellé de la tâche…"
+            autoFocus
+            onKeyDown={e => { if (e.key === 'Enter' && newLabel.trim()) { e.preventDefault(); handleCreate() } }}
+          />
+          <button type="button" disabled={!newLabel.trim() || creating} onClick={handleCreate}
+            className="shrink-0 px-3 py-2.5 rounded-lg bg-tunnel-accent text-white text-xs font-semibold disabled:opacity-50">
+            {creating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+          </button>
+          <button type="button" onClick={() => { setShowCreate(false); setNewLabel('') }}
+            className="shrink-0 px-2 py-2.5 rounded-lg border border-tunnel-border text-tunnel-muted">
+            <X size={13} />
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setShowCreate(true)}
+          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-tunnel-accent">
+          <Plus size={12} /> Nouvelle tâche
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const COMPLEXITY_OPTIONS = [
   { value: '1', label: '1 — Très simple' },
@@ -328,6 +440,15 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   const [interventions, setInterventions] = useState([])
   const [loadingInter, setLoadingInter] = useState(false)
 
+  // Tâche liée (obligatoire)
+  const [selectedTaskId, setSelectedTaskId] = useState(null)
+  const [closeTask, setCloseTask] = useState(false)
+
+  function handleSelectTask(taskId) {
+    setSelectedTaskId(taskId)
+    setCloseTask(false)
+  }
+
   // Catégories / facteurs
   const [categories, setCategories] = useState([])
   const [factors, setFactors] = useState([])
@@ -412,6 +533,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   async function handleSubmit(e) {
     e.preventDefault()
     if (!intervention) { setSubmitError('Sélectionner une intervention'); return }
+    if (!selectedTaskId) { setSubmitError('Sélectionner ou créer une tâche liée à cette action'); return }
     if (!handlers.handleValidate()) return
     setSubmitting(true)
     setSubmitError(null)
@@ -427,6 +549,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
       complexity_score: Number(formState.complexity),
       complexity_factor: Number(formState.complexity) > 5 ? formState.complexityFactors[0] : undefined,
       created_at: `${formState.date}T${ts}`,
+      tasks: [{ task_id: selectedTaskId, close_task: closeTask }],
     }
 
     if (timeStart && timeEnd && calcDuration(timeStart, timeEnd)) {
@@ -671,6 +794,17 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
                   Sélectionnez d'abord un équipement
                 </p>
               </div>
+            )}
+
+            {/* ── Tâche (obligatoire) ── */}
+            {intervention && (
+              <TaskSection
+                interventionId={intervention.id}
+                selectedTaskId={selectedTaskId}
+                onSelect={handleSelectTask}
+                closeTask={closeTask}
+                onCloseTaskChange={setCloseTask}
+              />
             )}
 
             {/* ── Date ── */}

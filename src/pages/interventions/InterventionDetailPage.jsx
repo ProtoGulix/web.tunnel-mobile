@@ -6,6 +6,7 @@ import { useInterventionDetail } from '../../hooks/interventions/useIntervention
 import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
+import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { formatDateFr } from '../../utils/dateUtils'
@@ -140,6 +141,12 @@ export default function InterventionDetailPage() {
   const [showStatusSheet, setShowStatusSheet] = useState(false)
   const [showActionForm, setShowActionForm] = useState(false)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
+  // Incrémenté à chaque reload() pour forcer InterventionTasksSection à
+  // recharger — une action liée à une tâche fait passer celle-ci en
+  // in_progress côté serveur (trigger DB), invisible sans ce signal car la
+  // section a son propre state de tâches, indépendant de `intervention`.
+  const [tasksRefreshKey, setTasksRefreshKey] = useState(0)
+  const reloadAll = () => { reload(); setTasksRefreshKey(k => k + 1) }
 
   useEffect(() => {
     getInterventionStatuses().then(setStatuses).catch(() => {})
@@ -251,6 +258,9 @@ export default function InterventionDetailPage() {
               <DICard request={intervention.request ?? null} />
             </div>
 
+            {/* Tâches */}
+            <InterventionTasksSection interventionId={id} refreshKey={tasksRefreshKey} />
+
             {/* Actions */}
             <div className="px-4 mt-4 mb-2">
               <div className="flex items-center justify-between mb-2">
@@ -299,7 +309,7 @@ export default function InterventionDetailPage() {
       {showActionForm && (
         <ActionForm
           onClose={() => setShowActionForm(false)}
-          onDone={reload}
+          onDone={reloadAll}
           defaultEquip={eq}
           defaultIntervention={intervention}
         />

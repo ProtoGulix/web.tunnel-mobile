@@ -19,6 +19,23 @@ export const INTERVENTION_STATUSES = {
   cancelled:      { label: 'Annulé',          color: '#616161', variant: 'secondary' },
 }
 
+// ─── Statuts tâches (intervention_tasks) ─────────────────────────────────────
+// Harmonisé avec src/config/taskConfig.js côté tunnel-gmao (web) — mêmes
+// libellés et même sémantique de couleur pour rester cohérent entre clients.
+export const TASK_STATUSES = {
+  todo:        { label: 'En attente', color: '#616161', variant: 'secondary' },
+  in_progress: { label: 'En cours',   color: '#1F3A5F', variant: 'info' },
+  done:        { label: 'Validée',    color: '#2E7D32', variant: 'success' },
+  skipped:     { label: 'Ignorée',    color: '#ED6C02', variant: 'warning' },
+}
+
+// ─── Origine des tâches ────────────────────────────────────────────────────
+export const TASK_ORIGINS = {
+  plan: { label: 'Gamme',       color: '#2E7D32', variant: 'success' },
+  resp: { label: 'Responsable', color: '#1F3A5F', variant: 'info' },
+  tech: { label: 'Technicien',  color: '#ED6C02', variant: 'warning' },
+}
+
 // ─── Priorités ───────────────────────────────────────────────────────────────
 export const PRIORITIES = {
   urgent:    { label: 'Urgent',    color: '#C62828', variant: 'danger' },

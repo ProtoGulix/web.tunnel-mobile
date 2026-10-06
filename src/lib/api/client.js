@@ -30,7 +30,17 @@ async function request(path, options = {}) {
   }
 
   const text = await response.text()
-  return text ? JSON.parse(text) : null
+  const body = text ? JSON.parse(text) : null
+
+  // Le backend enveloppe les réponses "objet unique" dans { data, audit? }
+  // (voir api/utils/response.py::single()) — jamais les listes paginées
+  // ({ items, pagination }) ni les référentiels (tableau brut). On déplie
+  // ici pour que tous les hooks consomment directement l'objet métier,
+  // sans avoir à connaître ce détail d'enveloppe backend.
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body && !('items' in body)) {
+    return body.data
+  }
+  return body
 }
 
 export const client = {
